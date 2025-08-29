@@ -1,0 +1,4 @@
+Local host testing:
+    cd docs
+    python -m http.server 8000
+Then visit localhost:8000 in your browser to check images and layout.
