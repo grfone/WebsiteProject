@@ -22,77 +22,160 @@
         </ul>
     </nav>
 
-    <!-- Main content -->
-    <main class="max-w-4xl mx-auto my-8 p-4 text-center">
-        <h2 class="text-3xl font-semibold mb-4">Upload a Cloud Image</h2>
-        <p class="text-lg mb-6">Upload an image of a cloud by clicking the button below or dragging and dropping it into the area. We'll predict its type using AI!</p>
+<!-- Main content -->
+<main class="max-w-4xl mx-auto my-8 p-4 text-center">
+  <h2 class="text-3xl font-semibold mb-4">Upload a Cloud Image</h2>
+  <p class="text-lg mb-6">
+    Upload an image of a cloud by clicking the button below or dragging and
+    dropping it into the area. We'll predict its type using AI!
+  </p>
 
-        <!-- File upload button -->
-        <div class="mb-6">
-            <label for="imageUpload" class="inline-block bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700">
-                Choose Image
-            </label>
-            <input type="file" id="imageUpload" accept="image/*" class="hidden">
-        </div>
+  <!-- File upload button -->
+  <div class="mb-6">
+    <label
+      for="imageUpload"
+      class="inline-block bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700"
+    >
+      Choose Image
+    </label>
+    <input type="file" id="imageUpload" accept="image/*" class="hidden" />
+  </div>
 
-        <!-- Drag-and-drop area -->
-        <div id="dropArea" class="border-2 border-dashed border-gray-400 rounded-lg p-6 mx-auto max-w-md h-48 flex items-center justify-center text-gray-500 hover:border-blue-600 transition-colors">
-            <p>Drag and drop your image here</p>
-        </div>
+  <!-- Drag-and-drop area -->
+  <div
+    id="dropArea"
+    class="border-2 border-dashed border-gray-400 rounded-lg p-6 mx-auto max-w-md h-48 flex items-center justify-center text-gray-500 hover:border-blue-600 transition-colors"
+  >
+    <p>Drag and drop your image here</p>
+  </div>
 
-        <!-- Result display -->
-        <div id="result" class="mt-6 hidden">
-            <h3 class="text-xl font-semibold mb-2">Prediction Result</h3>
-            <p class="text-lg">Predicted Cloud Type: <span id="cloudType" class="font-bold"></span></p>
-            <img id="previewImage" alt="Uploaded Cloud Image" class="mx-auto mt-4 rounded-lg shadow-lg max-w-full h-auto" style="max-width: 300px;">
-        </div>
-    </main>
+  <!-- Result display -->
+  <div id="result" class="mt-6 hidden">
+    <h3 class="text-xl font-semibold mb-2">Prediction Result</h3>
+    <p class="text-lg">
+      Predicted Cloud Type: <span id="cloudType" class="font-bold"></span>
+    </p>
+    <img
+      id="previewImage"
+      alt="Uploaded Cloud Image"
+      class="mx-auto mt-4 rounded-lg shadow-lg max-w-full h-auto"
+      style="max-width: 300px"
+    />
+  </div>
+</main>
 
-    <!-- JavaScript for drag-and-drop and file input handling -->
-    <script>
-        const dropArea = document.getElementById('dropArea');
-        const imageUpload = document.getElementById('imageUpload');
-        const previewImage = document.getElementById('previewImage');
-        const result = document.getElementById('result');
+<!-- ONNX Runtime -->
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 
-        // Handle file selection via button
-        imageUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                displayImage(file);
-            }
-        });
+<!-- JavaScript for drag-and-drop and file input handling -->
+<script>
+  const dropArea = document.getElementById("dropArea");
+  const imageUpload = document.getElementById("imageUpload");
+  const previewImage = document.getElementById("previewImage");
+  const result = document.getElementById("result");
+  const cloudType = document.getElementById("cloudType");
 
-        // Handle drag-and-drop
-        dropArea.addEventListener('dragover', (event) => {
-            event.preventDefault();
-            dropArea.classList.add('border-blue-600');
-        });
+  let session;
 
-        dropArea.addEventListener('dragleave', () => {
-            dropArea.classList.remove('border-blue-600');
-        });
+  // Cloud labels from confusion matrix
+  const classLabels = [
+    "Altocumulus",
+    "Altostratus",
+    "Cirrocumulus",
+    "Cirrostratus",
+    "Cirrus",
+    "Contrail",
+    "Cumulonimbus",
+    "Cumulus",
+    "Nimbostratus",
+    "Stratocumulus",
+    "Stratus",
+  ];
 
-        dropArea.addEventListener('drop', (event) => {
-            event.preventDefault();
-            dropArea.classList.remove('border-blue-600');
-            const file = event.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                displayImage(file);
-            } else {
-                alert('Please drop a valid image file.');
-            }
-        });
+  // Load ONNX model
+  async function loadModel() {
+    session = await ort.InferenceSession.create("model.onnx");
+  }
+  loadModel();
 
-        function displayImage(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                result.classList.remove('hidden');
-                // Placeholder for model_fold1.onnx prediction
-                // You will add code here to process the image and run the model
-                document.getElementById('cloudType').textContent = 'Processing...';
-            };
-            reader.readAsDataURL(file);
-        }
-    </script>
+  // File input
+  imageUpload.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    if (file) displayImage(file);
+  });
+
+  // Drag & drop
+  dropArea.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    dropArea.classList.add("border-blue-600");
+  });
+  dropArea.addEventListener("dragleave", () => {
+    dropArea.classList.remove("border-blue-600");
+  });
+  dropArea.addEventListener("drop", (event) => {
+    event.preventDefault();
+    dropArea.classList.remove("border-blue-600");
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      displayImage(file);
+    } else {
+      alert("Please drop a valid image file.");
+    }
+  });
+
+  // Display & process image
+  function displayImage(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = async () => {
+        // Crop to square
+        const size = Math.min(img.width, img.height);
+        const sx = (img.width - size) / 2;
+        const sy = (img.height - size) / 2;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 380;
+        canvas.height = 380;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, sx, sy, size, size, 0, 0, 380, 380);
+
+        previewImage.src = canvas.toDataURL();
+        result.classList.remove("hidden");
+        cloudType.textContent = "Processing...";
+
+        // Run model
+        const inputTensor = preprocessCanvas(canvas);
+        const feeds = { input: inputTensor }; // change "input" if needed
+        const output = await session.run(feeds);
+        const outputData = output[Object.keys(output)[0]].data;
+        const classIdx = argMax(outputData);
+        const className = classLabels[classIdx];
+
+        cloudType.innerHTML = `Cloud type: <b>${className}</b> <br><i>*Then program always assumes that the user is very intelligent. If you didn't upload an image of a cloud you will get random results.</i>`;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+    // Preprocess canvas → tensor (EfficientNet style: [-1,1])
+    function preprocessCanvas(canvas) {
+      const ctx = canvas.getContext("2d");
+      const imgData = ctx.getImageData(0, 0, 380, 380).data;
+      const floatData = new Float32Array(380 * 380 * 3);
+
+      for (let i = 0, j = 0; i < imgData.length; i += 4, j += 3) {
+        floatData[j]     = (imgData[i] / 127.5) - 1.0;     // R
+        floatData[j + 1] = (imgData[i + 1] / 127.5) - 1.0; // G
+        floatData[j + 2] = (imgData[i + 2] / 127.5) - 1.0; // B
+      }
+
+      // Shape: NHWC → [1,380,380,3]
+      return new ort.Tensor("float32", floatData, [1, 380, 380, 3]);
+    }
+
+  function argMax(array) {
+    return array.indexOf(Math.max(...array));
+  }
+</script>
