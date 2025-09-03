@@ -151,6 +151,9 @@
 
         cloudType.innerHTML = `${className} <br><br> <span style="font-weight: normal;">${description}</span>
           <br><br> <small style="font-weight: normal;"><i>The program always assumes that the user knows what a cloud is. Non-cloud images will get a random classification.</i></small>`;
+
+          // ✅ **ADDED THIS LINE TO CALL THE UPLOAD FUNCTION**
+          await sendToServer(file);
       };
       img.src = e.target.result;
     };
@@ -180,34 +183,34 @@
     return maxIdx;
   }
 
-async function sendToServer(file) {
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
+    async function sendToServer(file) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
 
-    // Step 1: Get signed URL
-    const res = await fetch("https://websiteproject-zf7r.onrender.com/get-upload-url", {
-      method: "POST",
-      body: formData
-    });
-    if (!res.ok) throw new Error("Failed to get signed URL");
+        // Step 1: Get signed URL
+        const res = await fetch("https://websiteproject-zf7r.onrender.com/get-upload-url", {
+          method: "POST",
+          body: formData
+        });
+        if (!res.ok) throw new Error("Failed to get signed URL");
 
-    const data = await res.json(); // { signed_url, filename }
+        const data = await res.json(); // { signed_url, filename }
 
-    // Step 2: Upload file using PUT
-    const uploadRes = await fetch(data.signed_url, {
-      method: "PUT",
-      body: file,
-      headers: { "Content-Type": file.type }
-    });
-    if (!uploadRes.ok) throw new Error("Upload to storage failed");
+        // Step 2: Upload file using PUT
+        const uploadRes = await fetch(data.signed_url, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type }
+        });
+        if (!uploadRes.ok) throw new Error("Upload to storage failed");
 
-    alert(`✅ Image saved on server as: ${data.filename}`);
+        alert(`✅ Image saved on server as: ${data.filename}`);
 
-  } catch (err) {
-    alert(`⚠ Could not save image to server: ${err.message}`);
-  }
-}
+      } catch (err) {
+        alert(`⚠ Could not save image to server: ${err.message}`);
+      }
+    }
 
 
 
