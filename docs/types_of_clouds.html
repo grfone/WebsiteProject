@@ -150,7 +150,7 @@
         const description = cloudDescriptions[className] || "No description available.";
 
         cloudType.innerHTML = `${className} <br><br> <span style="font-weight: normal;">${description}</span>
-          <br><br> <small style="font-weight: normal;"><i>The program always assumes that the user knows what a cloud is. Non-cloud images will get a random classification.</i></small>`;
+          <br><br> <small style="font-weight: normal;"><i>*The program always assumes that the user knows what a cloud is. Non-cloud images will get a random classification.</i></small>`;
 
           // ✅ **ADDED THIS LINE TO CALL THE UPLOAD FUNCTION**
           await sendToServer(file);
