@@ -1,14 +1,17 @@
 import os
-import zipfile
 import numpy as np
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import tensorflow as tf
+from threading import Lock
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # api/
+ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))  # repo root
+MODELS_ROOT = os.path.join(ROOT_DIR, "models")
 
 app = FastAPI()
 
-# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://api.grfone.es"],
@@ -17,58 +20,67 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load models on startup
-models = []
+# Runtime env tweaks (CPU-only & quieter logs)
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
 
+_models = []
+_models_lock = Lock()
+
+def _resolve_model_path(i: int) -> str:
+    fold_dir = os.path.join(MODELS_ROOT, f"model_fold{i}.zip")
+    # Extract and check for .keras file inside the zip
+    import zipfile
+    with zipfile.ZipFile(fold_dir, 'r') as zip_ref:
+        keras_files = [f for f in zip_ref.namelist() if f.endswith(".keras")]
+        if keras_files:
+            temp_dir = os.path.join(MODELS_ROOT, f"temp_fold{i}")
+            os.makedirs(temp_dir, exist_ok=True)
+            zip_ref.extract(keras_files[0], temp_dir)
+            return os.path.join(temp_dir, keras_files[0])
+    raise FileNotFoundError(f"No .keras file found in {fold_dir}")
 
 @app.on_event("startup")
 async def load_models():
-    global models
-    models_dir = "models"
-    for i in range(1, 6):
-        zip_path = os.path.join(models_dir, f"model_fold{i}.zip")
-        extract_dir = os.path.join(models_dir, f"uncompressed_fold{i}")
-        if not os.path.exists(extract_dir):
-            with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                zip_ref.extractall(extract_dir)
-        keras_files = [f for f in os.listdir(extract_dir) if f.endswith(".keras")]
-        if not keras_files:
-            raise FileNotFoundError(f"No .keras file found in {extract_dir}")
-        model_path = os.path.join(extract_dir, keras_files[0])
-        models.append(tf.keras.models.load_model(model_path))
-    print(f"Loaded {len(models)} models.")
+    global _models
+    with _models_lock:
+        if _models:  # already loaded (e.g., when using --preload)
+            return
+        for i in range(1, 6):
+            path = _resolve_model_path(i)
+            _models.append(tf.keras.models.load_model(path))
+    print(f"Loaded {_models.__len__()} models.")
 
-
-# Input schema
 class InputData(BaseModel):
-    input: list[list[float]]  # shape: [1,380,380,3] flattened or similar
+    # flattened [1, 380*380*3] OR shaped [1,380,380,3]
+    input: list
 
+@app.get("/health")
+async def health():
+    return {"status": "ok", "models": len(_models)}
 
 @app.post("/predict")
 async def predict(data: InputData):
-    if not models:
+    if not _models:
         raise HTTPException(status_code=500, detail="Models not loaded")
 
-    input_array = np.array(data.input, dtype=np.float32)
+    arr = np.array(data.input, dtype=np.float32)
     expected_size = 380 * 380 * 3
-    if input_array.size != expected_size:
-        raise HTTPException(status_code=400,
-                            detail=f"Input array must have {expected_size} elements, got {input_array.size}")
 
-    if input_array.ndim == 2:
-        input_array = np.reshape(input_array, (1, 380, 380, 3))
+    # Accept [1, H, W, C], [H*W*C], or [[H*W*C]]
+    if arr.ndim == 1 and arr.size == expected_size:
+        arr = arr.reshape(1, 380, 380, 3)
+    elif arr.ndim == 2 and arr.shape[0] == 1 and arr.shape[1] == expected_size:
+        arr = arr.reshape(1, 380, 380, 3)
+    elif arr.ndim == 4 and arr.shape == (1, 380, 380, 3):
+        pass
+    else:
+        raise HTTPException(status_code=400, detail=f"Expected 1x380x380x3 (or flattened), got shape {arr.shape}")
 
-    summed_output = None
-    for model in models:
-        try:
-            output = model.predict(input_array, verbose=0)
-            summed_output = output if summed_output is None else summed_output + output
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+    summed = None
+    for m in _models:
+        out = m.predict(arr, verbose=0)
+        summed = out if summed is None else summed + out
 
-    if summed_output is None:
-        raise HTTPException(status_code=500, detail="No valid predictions generated")
-
-    prediction = summed_output.tolist()
-    class_idx = int(np.argmax(summed_output))
-    return {"raw_output": prediction, "class_idx": class_idx}
+    class_idx = int(np.argmax(summed, axis=-1)[0])
+    return {"raw_output": summed.tolist(), "class_idx": class_idx}
