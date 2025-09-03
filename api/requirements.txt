@@ -3,4 +3,4 @@ uvicorn
 gunicorn
 python-multipart
 mega.py
-tenacity
+tenacity>=8.2.0
