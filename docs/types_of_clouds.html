@@ -194,25 +194,6 @@
     return array.indexOf(Math.max(...array));
   }
 
-    async function sendToServer(file) {
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
 
-        const res = await fetch("https://websiteproject-zf7r.onrender.com/get-upload-url", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error("Upload failed");
-
-        const data = await res.json();
-        console.log("Saved as:", data.filename);
-        cloudType.innerHTML += `<br><br><small style="color:green;">Image saved on server as: ${data.filename}</small>`;
-      } catch (err) {
-        console.warn("Server unavailable or upload failed:", err);
-        cloudType.innerHTML += `<br><br><small style="color:red;">⚠ Could not save image to server.</small>`;
-      }
-    }
 
 </script>
