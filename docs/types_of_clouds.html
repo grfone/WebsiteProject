@@ -78,43 +78,32 @@
 
   let session;
 
-  // Cloud labels
   const classLabels = [
-    "Altocumulus",
-    "Altostratus",
-    "Cirrocumulus",
-    "Cirrostratus",
-    "Cirrus",
-    "Contrail",
-    "Cumulonimbus",
-    "Cumulus",
-    "Nimbostratus",
-    "Stratocumulus",
-    "Stratus",
+    "Altocumulus", "Altostratus", "Cirrocumulus", "Cirrostratus",
+    "Cirrus", "Contrail", "Cumulonimbus", "Cumulus",
+    "Nimbostratus", "Stratocumulus", "Stratus"
   ];
 
-  // Cloud descriptions
   const cloudDescriptions = {
-    "Altocumulus": "Altocumulus clouds are mid-level clouds appearing as white or gray patches, often in rows or waves. They form when moist air rises and cools at altitudes of 6,500 to 20,000 feet, typically due to instability in the atmosphere. These clouds often appear on warm, humid mornings and can indicate approaching thunderstorms or a change in weather later in the day. Fun fact: They are sometimes called 'mackerel sky' due to their fish-scale appearance.",
-    "Altostratus": "Altostratus clouds are mid-level, gray or blue-gray sheets that often cover the entire sky. They form from large-scale lifting of moist air at 6,500 to 20,000 feet, commonly ahead of a warm front. These clouds typically appear before continuous rain or snow, signaling overcast conditions and precipitation within hours. Curiosity: They can create a watery sun effect, where the sun is visible but diffused.",
-    "Cirrocumulus": "Cirrocumulus are high-altitude clouds forming small, white, rippled patches or rows above 16,500 feet. They develop in unstable air masses with ice crystals, often on fair days. While they usually indicate good weather, they can precede a front or storm. Interesting note: Known as 'cloudlets,' they rarely last long and are a sign of high-level turbulence for aircraft.",
-    "Cirrostratus": "Cirrostratus are thin, high veil-like clouds covering the sky above 16,500 feet, made of ice crystals. They form ahead of warm fronts when moist air rises gradually. A halo around the sun or moon is a common sign, often predicting rain or snow in 12-24 hours. Fun fact: They are responsible for many optical phenomena like sundogs.",
-    "Cirrus": "Cirrus clouds are high, wispy, feathery streaks above 16,500 feet, composed of ice crystals. They form when moist air is lifted to high altitudes and freezes, often in fair weather. These 'mare's tails' can signal an approaching weather change, like a warm front in 24-48 hours. Curiosity: They are the fastest-moving clouds due to strong upper winds.",
-    "Contrail": "Contrails are linear clouds formed by aircraft exhaust condensing into ice crystals at high altitudes above 26,000 feet. They occur in cold, humid upper air and can persist if conditions are right, sometimes spreading into cirrus-like sheets. Implications: They indicate jet traffic and can affect local climate by trapping heat. Fun fact: Short-lived ones suggest dry air, while persistent ones mean moisture aloft.",
-    "Cumulonimbus": "Cumulonimbus are towering, dense clouds with anvil-shaped tops, extending from low to high altitudes. They form from powerful updrafts in unstable, moist air, often on hot afternoons. These thunderstorm clouds bring heavy rain, lightning, hail, and possibly tornadoes—seek shelter if seen. Curiosity: They can reach up to 60,000 feet and are the only clouds that produce thunder.",
-    "Cumulus": "Cumulus are low-level, puffy, cotton-like white clouds below 6,500 feet. They form on sunny days from rising thermals of warm air cooling and condensing. Fair weather cumulus indicate stable conditions, but if they grow vertically, they may become storm clouds. Fun fact: They dissipate in the evening as the ground cools, symbolizing 'fair weather' in folklore.",
-    "Nimbostratus": "Nimbostratus are thick, dark gray clouds covering the sky from low to mid levels. They form from widespread, gentle lifting of moist air, often associated with fronts. These bring steady, continuous rain or snow over large areas, leading to overcast, dreary weather. Interesting note: Unlike cumulonimbus, they lack dramatic features but can cause flooding from prolonged precipitation.",
-    "Stratocumulus": "Stratocumulus are low, lumpy, layered clouds below 6,500 feet, often in patches or rolls. They form when cumulus spreads out or stratus breaks up due to mild instability. Usually indicating dull weather, they can bring light drizzle but rarely heavy rain. Curiosity: Common over oceans, they help regulate Earth's temperature by reflecting sunlight.",
-    "Stratus": "Stratus are uniform, low-level gray clouds resembling fog lifted off the ground, below 6,500 feet. They form from cooling of air near the surface, like in inversion layers or frontal lifting. These bring drizzle or light snow, creating foggy, overcast conditions with poor visibility. Fun fact: When touching the ground, they become fog; they often lift into clearer skies by midday."
+    "Altocumulus": "Altocumulus clouds are mid-level clouds appearing as white or gray patches...",
+    "Altostratus": "Altostratus clouds are mid-level, gray or blue-gray sheets that often cover the entire sky...",
+    "Cirrocumulus": "Cirrocumulus are high-altitude clouds forming small, white, rippled patches...",
+    "Cirrostratus": "Cirrostratus are thin, high veil-like clouds covering the sky above 16,500 feet...",
+    "Cirrus": "Cirrus clouds are high, wispy, feathery streaks above 16,500 feet...",
+    "Contrail": "Contrails are linear clouds formed by aircraft exhaust condensing into ice crystals...",
+    "Cumulonimbus": "Cumulonimbus are towering, dense clouds with anvil-shaped tops...",
+    "Cumulus": "Cumulus are low-level, puffy, cotton-like white clouds below 6,500 feet...",
+    "Nimbostratus": "Nimbostratus are thick, dark gray clouds covering the sky from low to mid levels...",
+    "Stratocumulus": "Stratocumulus are low, lumpy, layered clouds below 6,500 feet...",
+    "Stratus": "Stratus are uniform, low-level gray clouds resembling fog lifted off the ground..."
   };
 
-  // Load ONNX model
   async function loadModel() {
     session = await ort.InferenceSession.create("model.onnx");
   }
   loadModel();
 
-  // File input
+  // File input handler
   imageUpload.addEventListener("change", (event) => {
     const file = event.target.files[0];
     if (file) displayImage(file);
@@ -125,34 +114,26 @@
     event.preventDefault();
     dropArea.classList.add("border-blue-600");
   });
-  dropArea.addEventListener("dragleave", () => {
-    dropArea.classList.remove("border-blue-600");
-  });
+  dropArea.addEventListener("dragleave", () => dropArea.classList.remove("border-blue-600"));
   dropArea.addEventListener("drop", (event) => {
     event.preventDefault();
     dropArea.classList.remove("border-blue-600");
     const file = event.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) {
-      displayImage(file);
-    } else {
-      alert("Please drop a valid image file.");
-    }
+    if (file && file.type.startsWith("image/")) displayImage(file);
+    else alert("Please drop a valid image file.");
   });
 
-  // Display & process image
   function displayImage(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const img = new Image();
       img.onload = async () => {
-        // Crop to square
         const size = Math.min(img.width, img.height);
         const sx = (img.width - size) / 2;
         const sy = (img.height - size) / 2;
 
         const canvas = document.createElement("canvas");
-        canvas.width = 380;
-        canvas.height = 380;
+        canvas.width = canvas.height = 380;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, sx, sy, size, size, 0, 0, 380, 380);
 
@@ -162,38 +143,54 @@
 
         // Run model
         const inputTensor = preprocessCanvas(canvas);
-        const feeds = { input: inputTensor }; // change "input" if needed
-        const output = await session.run(feeds);
+        const output = await session.run({ input: inputTensor });
         const outputData = output[Object.keys(output)[0]].data;
         const classIdx = argMax(outputData);
         const className = classLabels[classIdx];
         const description = cloudDescriptions[className] || "No description available.";
 
-        cloudType.innerHTML = `${className} <br><br> <span style="font-weight: normal;">${description}</span> <br><br> <small style="font-weight: normal;"><i>The program always assumes that the user knows what a cloud is. Non-cloud images will get a random classification.</i></small>`;      };
+        cloudType.innerHTML = `${className} <br><br> <span style="font-weight: normal;">${description}</span>
+          <br><br> <small style="font-weight: normal;"><i>The program always assumes that the user knows what a cloud is. Non-cloud images will get a random classification.</i></small>`;
+      };
       img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
 
-    function preprocessCanvas(canvas) {
-        const ctx = canvas.getContext("2d");
-        const imgData = ctx.getImageData(0, 0, 380, 380).data;
-        const floatData = new Float32Array(380 * 380 * 3);
-
-        for (let i = 0, j = 0; i < imgData.length; i += 4, j += 3) {
-            floatData[j] = imgData[i];         // R
-            floatData[j + 1] = imgData[i + 1]; // G
-            floatData[j + 2] = imgData[i + 2]; // B
-        }
-
-      // Shape: NHWC → [1,380,380,3]
-      return new ort.Tensor("float32", floatData, [1, 380, 380, 3]);
+  function preprocessCanvas(canvas) {
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.getImageData(0, 0, 380, 380).data;
+    const floatData = new Float32Array(380 * 380 * 3);
+    for (let i = 0, j = 0; i < imgData.length; i += 4, j += 3) {
+      floatData[j] = imgData[i];
+      floatData[j + 1] = imgData[i + 1];
+      floatData[j + 2] = imgData[i + 2];
     }
-
-  function argMax(array) {
-    return array.indexOf(Math.max(...array));
+    return new ort.Tensor("float32", floatData, [1, 380, 380, 3]);
   }
 
+  function argMax(array) {
+    let maxIdx = 0, maxVal = array[0];
+    for (let i = 1; i < array.length; i++) {
+      if (array[i] > maxVal) {
+        maxVal = array[i];
+        maxIdx = i;
+      }
+    }
+    return maxIdx;
+  }
 
-
+  async function sendToServer(file) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("https://websiteproject-zf7r.onrender.com/get-upload-url", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      cloudType.innerHTML += `<br><br><small style="color:green;">Image saved on server as: ${data.filename}</small>`;
+    } catch (err) {
+      console.warn("Server unavailable or upload failed:", err);
+      cloudType.innerHTML += `<br><br><small style="color:red;">⚠ Could not save image to server.</small>`;
+    }
+  }
 </script>
