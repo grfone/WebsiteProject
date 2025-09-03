@@ -3,4 +3,4 @@ uvicorn
 gunicorn
 python-multipart
 uuid
-superbase
+supabase
