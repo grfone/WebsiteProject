@@ -1,9 +1,1 @@
-fastapi
-uvicorn
-gunicorn
-
-tensorflow
-numpy
-python-multipart
-
-pydantic
+fastapi uvicorn python-multipart mega.py
