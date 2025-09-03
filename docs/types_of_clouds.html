@@ -198,10 +198,12 @@
         if (!res.ok) throw new Error("Upload failed");
 
         const data = await res.json();
-        alert(`✅ Image saved on server as: ${data.filename}`);
+        cloudType.innerHTML += `<br><br><small style="color:green;">Image saved on server as: ${data.filename}</small>`;
+
 
       } catch (err) {
-        alert(`⚠ Could not save image to server: ${err.message}`);
+        console.warn("Upload failed:", err);
+        cloudType.innerHTML += `<br><br><small style="color:red;">⚠ Could not save image to server.</small>`;
       }
     }
 
