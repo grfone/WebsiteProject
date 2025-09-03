@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # private key, never exposed
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 bucket_name = "uploads"
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
