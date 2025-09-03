@@ -154,7 +154,7 @@
 
           // ✅ **ADDED THIS LINE TO CALL THE UPLOAD FUNCTION**
           await sendToServer(file);
-          alert(`✅ Poppop`);
+
       };
       img.src = e.target.result;
     };
@@ -189,23 +189,15 @@
         const formData = new FormData();
         formData.append("file", file);
 
-        // Step 1: Get signed URL
-        const res = await fetch("https://websiteproject-zf7r.onrender.com/get-upload-url", {
+        // Upload directly to backend
+        const res = await fetch("https://websiteproject-zf7r.onrender.com/upload-image", {
           method: "POST",
           body: formData
         });
-        if (!res.ok) throw new Error("Failed to get signed URL");
 
-        const data = await res.json(); // { signed_url, filename }
+        if (!res.ok) throw new Error("Upload failed");
 
-        // Step 2: Upload file using PUT
-        const uploadRes = await fetch(data.signed_url, {
-          method: "PUT",
-          body: file,
-          headers: { "Content-Type": file.type }
-        });
-        if (!uploadRes.ok) throw new Error("Upload to storage failed");
-
+        const data = await res.json();
         alert(`✅ Image saved on server as: ${data.filename}`);
 
       } catch (err) {
