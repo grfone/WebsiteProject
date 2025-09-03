@@ -6,10 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Enable CORS for www.grfone.es
+# Enable CORS for api.grfone.es
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://www.grfone.es"],  # Allow your webpage
+    allow_origins=["https://api.grfone.es"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
