@@ -1,3 +1,9 @@
 fastapi
 uvicorn
 gunicorn
+
+tensorflow
+numpy
+python-multipart
+
+pydantic
