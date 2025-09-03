@@ -8,7 +8,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://api.grfone.es"],
+    allow_origins=["*"],  # https://grfone.es/types_of_clouds.html
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
