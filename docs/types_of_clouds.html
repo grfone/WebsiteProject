@@ -84,19 +84,19 @@
     "Nimbostratus", "Stratocumulus", "Stratus"
   ];
 
-  const cloudDescriptions = {
-    "Altocumulus": "Altocumulus clouds are mid-level clouds appearing as white or gray patches...",
-    "Altostratus": "Altostratus clouds are mid-level, gray or blue-gray sheets that often cover the entire sky...",
-    "Cirrocumulus": "Cirrocumulus are high-altitude clouds forming small, white, rippled patches...",
-    "Cirrostratus": "Cirrostratus are thin, high veil-like clouds covering the sky above 16,500 feet...",
-    "Cirrus": "Cirrus clouds are high, wispy, feathery streaks above 16,500 feet...",
-    "Contrail": "Contrails are linear clouds formed by aircraft exhaust condensing into ice crystals...",
-    "Cumulonimbus": "Cumulonimbus are towering, dense clouds with anvil-shaped tops...",
-    "Cumulus": "Cumulus are low-level, puffy, cotton-like white clouds below 6,500 feet...",
-    "Nimbostratus": "Nimbostratus are thick, dark gray clouds covering the sky from low to mid levels...",
-    "Stratocumulus": "Stratocumulus are low, lumpy, layered clouds below 6,500 feet...",
-    "Stratus": "Stratus are uniform, low-level gray clouds resembling fog lifted off the ground..."
-  };
+    const cloudDescriptions = {
+        "Altocumulus": "Altocumulus clouds are mid-level clouds appearing as white or gray patches, often arranged in a regular pattern or ripples. They form on clear, sunny days and are typically found between 6,500 and 20,000 feet. These clouds are composed of water droplets and sometimes ice crystals. Interestingly, they can sometimes create a 'mackerel sky' pattern, resembling the scales of a mackerel fish.",
+        "Altostratus": "Altostratus clouds are mid-level, gray or blue-gray sheets that often cover the entire sky, creating a uniform layer. Found between 6,500 and 20,000 feet, they are usually composed of water droplets and ice crystals, often indicating an approaching warm front or storm. Fun fact: these clouds can produce a faint halo around the sun or moon due to their thin, translucent nature.",
+        "Cirrocumulus": "Cirrocumulus are high-altitude clouds forming small, white, rippled patches, often arranged in rows or a grid-like pattern. Found above 16,500 feet, they are made of ice crystals and indicate fair but cold weather. A quirky trait: they sometimes resemble tiny cotton balls scattered across the sky, giving a whimsical, delicate appearance.",
+        "Cirrostratus": "Cirrostratus are thin, high veil-like clouds covering the sky above 16,500 feet, composed entirely of ice crystals. They often create a halo effect around the sun or moon and signal an approaching weather change, typically within 24 hours. Interestingly, their delicate veil can sometimes make the sky look like it’s covered in a gossamer sheet.",
+        "Cirrus": "Cirrus clouds are high, wispy, feathery streaks above 16,500 feet, made of ice crystals due to the cold temperatures at that altitude. They often indicate fair weather but can signal an approaching storm. A fascinating tidbit: their delicate, feather-like appearance inspired their name, derived from the Latin word for 'curl' or 'fringe.'",
+        "Contrail": "Contrails are linear clouds formed by aircraft exhaust condensing into ice crystals at high altitudes, typically above 26,000 feet. They appear as white streaks trailing behind planes and can persist or dissipate based on atmospheric conditions. Fun fact: contrails can sometimes spread out to form cirrus-like clouds, influencing local weather patterns.",
+        "Cumulonimbus": "Cumulonimbus are towering, dense clouds with anvil-shaped tops, extending from low to high altitudes, often exceeding 20,000 feet. They are associated with thunderstorms, heavy rain, lightning, and even tornadoes. Interestingly, their anvil shape forms when strong winds at high altitudes flatten the cloud top, creating a dramatic, ominous silhouette.",
+        "Cumulus": "Cumulus are low-level, puffy, cotton-like white clouds below 6,500 feet, often seen on clear, sunny days. Composed of water droplets, they indicate fair weather but can grow into storm clouds. A charming fact: their fluffy, sculpted appearance has inspired artists and poets to liken them to cotton candy floating in the sky.",
+        "Nimbostratus": "Nimbostratus are thick, dark gray clouds covering the sky from low to mid levels, typically below 10,000 feet. They bring continuous rain or snow and are composed of water droplets and ice crystals. A curious note: these clouds can make the day feel perpetually gloomy, as they block out sunlight for hours.",
+        "Stratocumulus": "Stratocumulus are low, lumpy, layered clouds below 6,500 feet, often covering the sky in patches with breaks of clear sky in between. They are usually composed of water droplets and indicate unsettled weather. Fun fact: their bumpy texture can resemble a quilted blanket spread across the sky.",
+        "Stratus": "Stratus are uniform, low-level gray clouds resembling fog lifted off the ground, typically below 6,500 feet. They often bring drizzle or light snow and are made of water droplets. Interestingly, stratus clouds can create a moody, overcast atmosphere, often featured in films to set a somber or mysterious tone."
+    };
 
   async function loadModel() {
     session = await ort.InferenceSession.create("model.onnx");
