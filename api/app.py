@@ -22,6 +22,10 @@ dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 async def health():
     return {"status": "ok"}
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "API running"}
+
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     if not file.content_type.startswith("image/"):
