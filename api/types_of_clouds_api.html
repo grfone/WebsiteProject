@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GRF - Type of Clouds</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <!-- Header -->
+  <header class="relative bg-cover bg-center h-64 flex items-center justify-center" style="background-image: url('images/banner.jpg')">
+    <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="bg-blue-600 text-white p-4">
+    <ul class="flex justify-center space-x-8">
+      <li><a href="index.html" class="hover:underline">Home</a></li>
+      <li><a href="types_of_clouds_api.html" class="hover:underline">Types of Clouds</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main content -->
+  <main class="max-w-4xl mx-auto my-8 p-4 text-center">
+    <h2 class="text-3xl font-semibold mb-4">Upload a Cloud Image</h2>
+    <p class="text-lg mb-6">
+      Upload an image of a cloud by clicking the button below or dragging and
+      dropping it into the area. We'll predict its type using AI!
+    </p>
+
+    <!-- File upload -->
+    <div class="mb-6">
+      <label for="imageUpload" class="inline-block bg-blue-600 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-700">
+        Choose Image
+      </label>
+      <input type="file" id="imageUpload" accept="image/*" class="hidden" />
+    </div>
+
+    <!-- Drag-and-drop -->
+    <div
+      id="dropArea"
+      class="border-2 border-dashed border-gray-400 rounded-lg p-6 mx-auto max-w-md h-48 flex items-center justify-center text-gray-500 hover:border-blue-600 transition-colors"
+    >
+      <p>Drag and drop your image here</p>
+    </div>
+
+    <!-- Result -->
+    <div id="result" class="mt-6 hidden">
+      <h3 class="text-xl font-semibold mb-2">Prediction Result</h3>
+      <p class="text-lg">
+        Predicted Cloud Type: <span id="cloudType" class="font-bold"></span>
+      </p>
+      <img
+        id="previewImage"
+        alt="Uploaded Cloud Image"
+        class="mx-auto mt-4 rounded-lg shadow-lg max-w-full h-auto"
+        style="max-width: 300px"
+      />
+    </div>
+  </main>
+
+  <script>
+    const dropArea = document.getElementById("dropArea");
+    const imageUpload = document.getElementById("imageUpload");
+    const previewImage = document.getElementById("previewImage");
+    const result = document.getElementById("result");
+    const cloudType = document.getElementById("cloudType");
+
+    // Class labels
+    const classLabels = [
+      "Altocumulus",
+      "Altostratus",
+      "Cirrocumulus",
+      "Cirrostratus",
+      "Cirrus",
+      "Contrail",
+      "Cumulonimbus",
+      "Cumulus",
+      "Nimbostratus",
+      "Stratocumulus",
+      "Stratus",
+    ];
+
+    // File input
+    imageUpload.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) displayImage(file);
+    });
+
+    // Drag & drop
+    dropArea.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      dropArea.classList.add("border-blue-600");
+    });
+    dropArea.addEventListener("dragleave", () => {
+      dropArea.classList.remove("border-blue-600");
+    });
+    dropArea.addEventListener("drop", (event) => {
+      event.preventDefault();
+      dropArea.classList.remove("border-blue-600");
+      const file = event.dataTransfer.files[0];
+      if (file && file.type.startsWith("image/")) {
+        displayImage(file);
+      } else {
+        alert("Please drop a valid image file.");
+      }
+    });
+
+    // Display & process image
+    function displayImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = async () => {
+          // Crop to square
+          const size = Math.min(img.width, img.height);
+          const sx = (img.width - size) / 2;
+          const sy = (img.height - size) / 2;
+
+          const canvas = document.createElement("canvas");
+          canvas.width = 380;
+          canvas.height = 380;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, 380, 380);
+
+          previewImage.src = canvas.toDataURL();
+          result.classList.remove("hidden");
+          cloudType.textContent = "Processing...";
+
+          // Preprocess image → send to backend
+          const inputArray = preprocessCanvas(canvas);
+          await sendToAPI(inputArray);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function preprocessCanvas(canvas) {
+      const ctx = canvas.getContext("2d");
+      const imgData = ctx.getImageData(0, 0, 380, 380).data;
+      const floatData = [];
+      for (let i = 0; i < imgData.length; i += 4) {
+        floatData.push(imgData[i], imgData[i + 1], imgData[i + 2]);
+      }
+      // Shape: [1,380*380*3]
+      return [floatData];
+    }
+
+    async function sendToAPI(inputArray) {
+      try {
+        const response = await fetch("https://your-render-backend.onrender.com/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ input: inputArray }),
+        });
+        const data = await response.json();
+        const idx = data.class_idx;
+        cloudType.textContent = classLabels[idx] || "Unknown";
+      } catch (err) {
+        console.error("Prediction error:", err);
+        cloudType.textContent = "Error during prediction";
+      }
+    }
+  </script>
+</body>
+</html>
