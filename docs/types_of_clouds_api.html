@@ -151,7 +151,7 @@
 
     async function sendToAPI(inputArray) {
       try {
-        const response = await fetch("https://your-render-backend.onrender.com/predict", {
+        const response = await fetch("https://api.grfone.es", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ input: inputArray }),
