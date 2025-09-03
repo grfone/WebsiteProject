@@ -2,6 +2,5 @@ fastapi
 uvicorn
 gunicorn
 python-multipart
-
 mega.py
-tenacity>=8.2.0
+tenacity
