@@ -2,9 +2,7 @@ import os
 from datetime import datetime
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from mega import Mega
-import io
-
+import dropbox
 
 app = FastAPI()
 
@@ -16,13 +14,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mega.nz setup
-MEGA_EMAIL = os.getenv("MEGA_EMAIL")
-MEGA_PASSWORD = os.getenv("MEGA_PASSWORD")
-
-def get_mega_client():
-    mega = Mega()
-    return mega.login(MEGA_EMAIL, MEGA_PASSWORD)
+# Dropbox setup
+DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
+dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 
 @app.get("/health")
 async def health():
@@ -34,20 +28,17 @@ async def upload_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only image files allowed")
 
     try:
-        # Get Mega client
-        mega_client = get_mega_client()
-
         # Prepare file metadata
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
         filename = f"{timestamp}_{file.filename}"
+        dropbox_path = f"/{filename}"
 
-        # Stream file content to Mega
+        # Read file content
         file_content = await file.read()
-        file_stream = io.BytesIO(file_content)
 
-        # Upload to Mega
-        mega_client.uploadfile(file_stream, filename, mega_client.get_user()['id'])
+        # Upload to Dropbox
+        dbx.files_upload(file_content, dropbox_path, mode=dropbox.files.WriteMode("add"))
 
-        return {"filename": filename, "message": "Image uploaded to Mega.nz successfully"}
+        return {"filename": filename, "message": "Image uploaded to Dropbox successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
