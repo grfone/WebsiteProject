@@ -193,4 +193,28 @@
   function argMax(array) {
     return array.indexOf(Math.max(...array));
   }
+
+  async function sendToServer(file) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("https://<your-render-app-url>/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+      console.log("Saved as:", data.filename);
+
+      // Optional: add a confirmation note below prediction
+      cloudType.innerHTML += `<br><br><small style="color:green;">Image saved on server as: ${data.filename}</small>`;
+    } catch (err) {
+      console.warn("Server unavailable or upload failed:", err);
+      cloudType.innerHTML += `<br><br><small style="color:red;">⚠ Could not save image to server.</small>`;
+    }
+  }
+
 </script>
