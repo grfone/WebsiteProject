@@ -1,44 +1,39 @@
+# backend/app.py
 import os
-from datetime import datetime
+import uuid
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import dropbox
+from supabase import create_client
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")  # private key, never exposed
+bucket_name = "uploads"
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # https://grfone.es/types_of_clouds.html
+    allow_origins=["*"],  # adjust for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Dropbox setup
-DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN")
-dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
 
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
-
-@app.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+@app.post("/get-upload-url")
+async def get_upload_url(file: UploadFile = File(...)):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files allowed")
 
     try:
-        # Prepare file metadata
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S%f")
-        filename = f"{timestamp}_{file.filename}"
-        dropbox_path = f"/{filename}"
+        ext = file.filename.split(".")[-1]
+        filename = f"{uuid.uuid4()}.{ext}"
+        path = f"{bucket_name}/{filename}"
 
-        # Read file content
-        file_content = await file.read()
+        # Generate signed URL valid for 60 seconds
+        signed_url = supabase.storage.from_(bucket_name).create_signed_url(path, 60, method="PUT")
 
-        # Upload to Dropbox
-        dbx.files_upload(file_content, dropbox_path, mode=dropbox.files.WriteMode("add"))
-
-        return {"filename": filename, "message": "Image uploaded to Dropbox successfully"}
+        return {"signed_url": signed_url, "filename": filename}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
