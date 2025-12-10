@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GRF - Happy Chat</title>
+  <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <header class="relative bg-cover bg-center h-64 flex items-center justify-center"
+          style="background-image: url('images/banner.jpg')">
+    <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
+  </header>
+
+  <nav class="bg-blue-600 text-white p-4">
+    <ul class="flex justify-center space-x-8">
+      <li><a href="index.html" class="hover:underline">Home</a></li>
+      <li><a href="types_of_clouds.html" class="hover:underline">Types of Clouds</a></li>
+      <li><a href="happy_chat.html" class="hover:underline font-bold">Happy Chat</a></li>
+      <li><a href="database.html" class="hover:underline">Database</a></li>
+    </ul>
+  </nav>
+
+  <main class="max-w-3xl mx-auto my-10 p-6 text-center">
+    <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
+      <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
+      <input id="username" type="text" placeholder="Username or Email" class="w-full p-4 border rounded-lg text-lg mb-4">
+      <div class="relative mb-6">
+        <input id="password" type="password" placeholder="Password" class="w-full p-4 border rounded-lg text-lg pr-12">
+        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+          <svg id="eyeIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path id="eyeIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+        </button>
+      </div>
+      <button id="signInButton" class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+        Sign In
+      </button>
+      <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
+    </div>
+
+    <div id="companionContainer" class="hidden flex flex-col items-center mt-10">
+      <h2 class="text-3xl font-semibold mb-6">Your Companion</h2>
+      <div id="companionFace" class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 transition transform">
+        <img id="faceImg" src="images/waiting_only.gif" alt="Companion" class="w-56 h-56">
+      </div>
+      <p class="mt-6 text-lg text-gray-700">Click or tap the face to talk!</p>
+      <button id="signOutButton" class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700">
+        Sign Out
+      </button>
+    </div>
+  </main>
+
+  <script>
+    // ------- CONFIG -------
+    const COGNITO_CONFIG = {
+      UserPoolId: 'eu-central-1_0MU0mOTAk',
+      ClientId: '26fgrn5390lu7j8kgics78bmss',
+      IdentityPoolId: 'eu-central-1:c05e31b0-edb2-4190-81ed-970d7423b4f5',
+      Region: 'eu-central-1'
+    };
+    const WS_URL = "wss://xkl5ptgrai.execute-api.us-east-1.amazonaws.com/prod";
+
+    // ------- STATE -------
+    const pool = new AmazonCognitoIdentity.CognitoUserPool({
+      UserPoolId: COGNITO_CONFIG.UserPoolId,
+      ClientId: COGNITO_CONFIG.ClientId
+    });
+    const loginBox = document.getElementById("loginBox");
+    const companionContainer = document.getElementById("companionContainer");
+    const errorEl = document.getElementById("loginError");
+    const faceImg = document.getElementById("faceImg");
+    const waitingSrc = "images/waiting_only.gif";
+    const talkingSrc = "images/talking_only.gif";
+
+    let currentUser = null;
+    let socket = null;
+    let socketQueue = []; // queue JSON messages until socket opens
+    let recorder = null;
+    let mediaStream = null;
+    let idToken = null;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let playbackQueue = Promise.resolve();
+    let isRecording = false;
+
+    function showError(msg) { errorEl.textContent = msg; errorEl.classList.remove("hidden"); }
+    function hideError() { errorEl.classList.add("hidden"); }
+
+    // PASSWORD TOGGLE
+    document.getElementById("togglePassword").addEventListener("click", function () {
+      const pwd = document.getElementById("password");
+      const iconPath = document.getElementById("eyeIconPath");
+      const hidden = pwd.type === "password";
+      pwd.type = hidden ? "text" : "password";
+      iconPath.setAttribute("d", hidden
+        ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 012.291-3.95M9.88 9.88A3 3 0 0114.12 14.12M3 3l18 18"
+        : "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z");
+    });
+
+    // SIGN IN
+    document.getElementById("signInButton").addEventListener("click", () => {
+      hideError();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      if (!username || !password) return showError("Enter username and password");
+
+      const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({ Username: username, Password: password });
+      const cognitoUser = new AmazonCognitoIdentity.CognitoUser({ Username: username, Pool: pool });
+
+      cognitoUser.authenticateUser(authDetails, {
+        onSuccess: result => {
+          currentUser = username;
+          idToken = result.getIdToken().getJwtToken();
+          loginBox.classList.add("hidden");
+          companionContainer.classList.remove("hidden");
+          connectWebSocket(); // start websocket (will include token)
+        },
+        onFailure: err => showError(err.message || "Login failed")
+      });
+    });
+
+    // WEBSOCKET connect + handlers
+    function connectWebSocket() {
+      if (socket && socket.readyState === WebSocket.OPEN) return;
+      // build url with token
+      const urlWithToken = `${WS_URL}?token=${encodeURIComponent(idToken || "")}`;
+      socket = new WebSocket(urlWithToken);
+      socket.binaryType = "arraybuffer";
+
+      socket.addEventListener('open', () => {
+        console.log("WS open");
+        // flush queue
+        while (socketQueue.length) {
+          socket.send(JSON.stringify(socketQueue.shift()));
+        }
+      });
+
+      socket.addEventListener('close', () => console.log("WS closed"));
+      socket.addEventListener('error', e => console.error("WS error", e));
+
+      // receive
+      socket.addEventListener('message', async evt => {
+        try {
+          // If server sends text
+          if (typeof evt.data === "string") {
+            const msg = JSON.parse(evt.data);
+            if (msg.type === "audio_response" && msg.data) {
+              // base64 to ArrayBuffer
+              const binary = atob(msg.data);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              playAudio(bytes.buffer);
+            } else if (msg.type === "speech_start") {
+              faceImg.src = talkingSrc;
+            } else if (msg.type === "speech_end") {
+              faceImg.src = waitingSrc;
+            }
+            return;
+          }
+          // Binary audio fallback
+          playAudio(evt.data);
+        } catch (err) {
+          console.error("onmessage parse error", err);
+        }
+      });
+    }
+
+    // send helper that queues until open
+    function sendJson(obj) {
+      if (!socket) return console.warn("WS not initialized");
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify(obj));
+      } else {
+        socketQueue.push(obj);
+      }
+    }
+
+    // AUDIO PLAY
+    function playAudio(arrayBuffer) {
+      // ensure AudioContext resumed on user gesture
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+      playbackQueue = playbackQueue.then(() =>
+        audioCtx.decodeAudioData(arrayBuffer.slice(0))
+          .then(buffer => {
+            const src = audioCtx.createBufferSource();
+            src.buffer = buffer;
+            src.connect(audioCtx.destination);
+            src.start();
+          })
+          .catch(e => console.error("decode error", e))
+      );
+    }
+
+    // RECORDING helpers
+    function getSupportedMime() {
+      const candidates = [
+        'audio/webm;codecs=opus',
+        'audio/ogg;codecs=opus',
+        'audio/webm',
+        'audio/ogg',
+        ''
+      ];
+      for (const m of candidates) {
+        if (!m) return undefined;
+        if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+      }
+      return undefined;
+    }
+
+    // toggle talking: single click toggles start/stop
+    async function toggleTalking() {
+      // ensure audio context resume on user activations
+      if (audioCtx.state === 'suspended') await audioCtx.resume().catch(()=>{});
+
+      if (isRecording) {
+        try {
+          recorder.stop();
+        } catch(e){}
+        faceImg.src = waitingSrc;
+        isRecording = false;
+        sendJson({ type: "end_of_utterance" });
+        return;
+      }
+
+      // ensure websocket connected
+      if (!socket || socket.readyState === WebSocket.CLOSED) connectWebSocket();
+
+      // get mic
+      try {
+        if (!mediaStream) {
+          mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+      } catch (err) {
+        showError("Microphone access denied or unavailable.");
+        console.error("getUserMedia error", err);
+        return;
+      }
+
+      const mime = getSupportedMime();
+      try {
+        recorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : undefined);
+      } catch (err) {
+        // fallback without mime
+        recorder = new MediaRecorder(mediaStream);
+      }
+
+      recorder.ondataavailable = async (e) => {
+        if (!e.data || e.data.size === 0) return;
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+          // queue as base64 JSON if socket not open
+          const arrayBuffer = await e.data.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = '';
+          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+          const base64Audio = btoa(binary);
+          socketQueue.push({ type: "audio_chunk", data: base64Audio });
+          return;
+        }
+        const arrayBuffer = await e.data.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        const base64Audio = btoa(binary);
+        socket.send(JSON.stringify({ type: "audio_chunk", data: base64Audio }));
+      };
+
+      recorder.onerror = (err) => console.error("recorder error", err);
+      recorder.start(200); // emit every 200ms
+      faceImg.src = talkingSrc;
+      isRecording = true;
+      sendJson({ type: "start_session", user: currentUser || "guest" });
+    }
+
+    // click/tap handlers
+    const face = document.getElementById("companionFace");
+    face.addEventListener("click", toggleTalking);
+    face.addEventListener("touchend", (e) => { e.preventDefault(); toggleTalking(); });
+
+    // SIGN OUT cleanup
+    document.getElementById("signOutButton").addEventListener("click", () => {
+      try {
+        const u = pool.getCurrentUser();
+        if (u && typeof u.signOut === 'function') u.signOut();
+      } catch (e) { console.warn(e); }
+      // stop recorder & tracks
+      try {
+        if (recorder && recorder.state !== 'inactive') recorder.stop();
+      } catch(e){}
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(t => t.stop());
+        mediaStream = null;
+      }
+      // close socket
+      try { if (socket) socket.close(); } catch(e){}
+      socket = null;
+      idToken = null;
+      currentUser = null;
+      location.reload();
+    });
+
+    // make sure to stop AudioContext on page unload
+    window.addEventListener('beforeunload', () => {
+      try { audioCtx.close(); } catch(e){}
+      if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+      try { if (socket) socket.close(); } catch(e){}
+    });
+  </script>
+</body>
+</html>
