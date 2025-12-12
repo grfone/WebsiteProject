@@ -4,16 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GRF - Happy Chat</title>
-<link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
 <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
-<script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
-<script src="https://sdk.amazonaws.com/js/aws-sdk-client-bedrock-runtime-streaming/latest/aws-sdk-client-bedrock-runtime-streaming.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/aws-sdk/dist/aws-sdk.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@aws-sdk/client-bedrock-runtime-streaming/dist/browser/BedrockRuntimeStreaming.min.js"></script>
 <style>
-body { font-family: sans-serif; background: #f3f4f6; text-align: center; margin:0; padding:0;}
-#loginBox, #companionContainer { max-width: 400px; margin: 50px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
-#companionFace { width: 200px; height: 200px; border-radius: 50%; background: yellow; margin: 20px auto; display:flex; align-items:center; justify-content:center; cursor:pointer;}
-#faceImg { width: 180px; height: 180px; border-radius: 50%; }
-button { padding: 10px 20px; margin-top: 10px; cursor:pointer; }
+body { font-family:sans-serif; background:#f3f4f6; text-align:center; margin:0; padding:0; }
+#loginBox, #companionContainer { max-width:400px; margin:50px auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+#companionFace { width:200px; height:200px; border-radius:50%; background:yellow; margin:20px auto; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+#faceImg { width:180px; height:180px; border-radius:50%; }
+button { padding:10px 20px; margin-top:10px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -38,7 +37,7 @@ button { padding: 10px 20px; margin-top: 10px; cursor:pointer; }
 // ===== CONFIG =====
 const COGNITO_CONFIG = {
     UserPoolId: 'us-east-1_dnF4Uj5RY',
-    ClientId: '1eiq8thm150jeapi92ruvi58gk',
+    ClientId: '1eiq8thm150jeapi92ruvi58ruvi58gk',
     IdentityPoolId: 'us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580',
     Region: 'us-east-1'
 };
@@ -61,7 +60,6 @@ let recorder = null;
 let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let playbackQueue = Promise.resolve();
 let bedrockClient = null;
-let bedrockStream = null;
 let streaming = false;
 
 // ===== HELPER =====
@@ -102,30 +100,32 @@ function configureAWSCredentials(idToken){
         if(err){ showError("AWS credentials error: "+err.message); return; }
         loginBox.style.display="none";
         companionContainer.style.display="block";
-        bedrockClient = new AWS.BedrockRuntimeStreaming({ region: COGNITO_CONFIG.Region, credentials: AWS.config.credentials });
+        bedrockClient = new window.BedrockRuntimeStreaming.BedrockRuntimeStreamingClient({
+            region: COGNITO_CONFIG.Region,
+            credentials: AWS.config.credentials
+        });
     });
 }
 
 // ===== START / STOP STREAMING =====
 async function toggleStreaming(){
     if(!streaming){
-        // ===== START STREAM =====
+        // Start
         if(!mediaStream) mediaStream = await navigator.mediaDevices.getUserMedia({audio:true});
         recorder = new MediaRecorder(mediaStream,{ mimeType:"audio/webm;codecs=opus" });
-        const inputChunks = [];
 
-        bedrockStream = await bedrockClient.invokeModelWithBidirectionalStream({
+        const bedrockStream = await bedrockClient.invokeModelWithBidirectionalStream({
             modelId: "amazon.nova-2-sonic-v1:0",
             contentType: "audio/pcm;rate=16000",
             accept: "audio/pcm;rate=24000"
         });
 
-        // Handle audio output from Nova
+        // Receive Nova audio
         (async ()=>{
-            for await (const chunk of bedrockStream.outputStream){
+            for await(const chunk of bedrockStream.outputStream){
                 if(chunk.audioChunk?.bytes){
-                    const arrayBuffer = chunk.audioChunk.bytes.buffer;
-                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+                    const buf = chunk.audioChunk.bytes.buffer;
+                    const audioBuffer = await audioCtx.decodeAudioData(buf.slice(0));
                     playbackQueue = playbackQueue.then(()=>new Promise(r=>{
                         const src = audioCtx.createBufferSource();
                         src.buffer = audioBuffer;
@@ -137,7 +137,7 @@ async function toggleStreaming(){
                 }
             }
             setTalking(false);
-            streaming = false;
+            streaming=false;
         })();
 
         recorder.ondataavailable = e=>{
@@ -148,17 +148,14 @@ async function toggleStreaming(){
             }
         };
         recorder.start(200);
-        streaming = true;
-
+        streaming=true;
     } else {
-        // ===== STOP STREAM =====
+        // Stop
         if(recorder && recorder.state==="recording") recorder.stop();
-        if(bedrockStream) bedrockStream.completeInputStream();
-        streaming = false;
+        streaming=false;
     }
 }
 
-// ===== UI EVENTS =====
 document.getElementById("companionFace").addEventListener("click", toggleStreaming);
 
 document.getElementById("signOutButton").addEventListener("click", ()=>{
@@ -166,6 +163,5 @@ document.getElementById("signOutButton").addEventListener("click", ()=>{
     location.reload();
 });
 </script>
-
 </body>
 </html>
