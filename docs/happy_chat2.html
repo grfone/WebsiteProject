@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRF - Happy Chat</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Cognito Identity SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
+    <!-- AWS SDK (v2 – needed for CognitoIdentityCredentials) -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+<header class="relative bg-cover bg-center h-64 flex items-center justify-center"
+        style="background-image: url('images/banner.jpg')">
+    <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
+</header>
+
+<nav class="bg-blue-600 text-white p-4">
+    <ul class="flex justify-center space-x-8">
+        <li><a href="index.html" class="hover:underline">Home</a></li>
+        <li><a href="types_of_clouds.html" class="hover:underline">Types of Clouds</a></li>
+        <li><a href="happy_chat.html" class="hover:underline font-bold">Happy Chat</a></li>
+        <li><a href="database.html" class="hover:underline">Database</a></li>
+    </ul>
+</nav>
+
+<main class="max-w-3xl mx-auto my-10 p-6 text-center">
+
+    <!-- ==================== LOGIN ==================== -->
+    <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
+        <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
+
+        <input id="username" type="text" placeholder="Username or Email"
+               class="w-full p-4 border rounded-lg text-lg mb-4">
+
+        <div class="relative mb-6">
+            <input id="password" type="password" placeholder="Password"
+                   class="w-full p-4 border rounded-lg text-lg pr-12">
+
+            <button type="button" id="togglePassword"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+                <svg id="eyeIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path id="eyeIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+            </button>
+        </div>
+
+        <button id="signInButton"
+                class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+            Sign In
+        </button>
+
+        <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
+    </div>
+
+    <!-- ==================== COMPANION ==================== -->
+    <div id="companionContainer" class="hidden flex flex-col items-center mt-10">
+        <h2 class="text-3xl font-semibold mb-6">Your Companion</h2>
+
+        <div id="companionFace"
+             class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center
+                    cursor-pointer hover:scale-105 transition transform">
+            <img id="faceImg" src="images/waiting_only.gif" class="w-56 h-56">
+        </div>
+
+        <p class="mt-6 text-lg text-gray-700">Tap once to start talking — tap again to stop</p>
+
+        <button id="signOutButton"
+                class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700">
+            Sign Out
+        </button>
+    </div>
+
+</main>
+
+<script>
+/* ==================== CONFIG ==================== */
+const COGNITO_CONFIG = {
+    UserPoolId: 'us-east-1_dnF4Uj5RY',
+    ClientId: '1eiq8thm150jeapi92ruvi58gk',
+    IdentityPoolId: 'us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580',
+    Region: 'us-east-1'
+};
+
+const pool = new AmazonCognitoIdentity.CognitoUserPool({
+    UserPoolId: COGNITO_CONFIG.UserPoolId,
+    ClientId: COGNITO_CONFIG.ClientId
+});
+
+/* ==================== ELEMENTS ==================== */
+const loginBox = document.getElementById("loginBox");
+const companionContainer = document.getElementById("companionContainer");
+const errorEl = document.getElementById("loginError");
+
+const faceImg = document.getElementById("faceImg");
+const waitingSrc = "images/waiting_only.gif";
+const talkingSrc = "images/talking_only.gif";
+
+let socket;
+let mediaStream;
+let recorder;
+let streaming = false;
+let sessionId = null;
+
+let userIsTalking = false;
+let modelIsTalking = false;
+
+function updateFace() {
+    faceImg.src = modelIsTalking ? talkingSrc : waitingSrc;
+}
+
+function setModelTalking(state) {
+    modelIsTalking = state;
+    updateFace();
+}
+
+/* ==================== LOGIN ==================== */
+document.getElementById("signInButton").addEventListener("click", () => {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!username || !password) {
+        showError("Please enter username and password");
+        return;
+    }
+    hideError();
+
+    const auth = new AmazonCognitoIdentity.AuthenticationDetails({
+        Username: username,
+        Password: password
+    });
+
+    const user = new AmazonCognitoIdentity.CognitoUser({
+        Username: username,
+        Pool: pool
+    });
+
+    user.authenticateUser(auth, {
+        onSuccess: result => {
+            const idToken = result.getIdToken().getJwtToken();
+            setupAWSCreds(idToken);
+        },
+        onFailure: err => showError(err.message || "Login failed"),
+        newPasswordRequired: () =>
+            showError("New password required – not supported here")
+    });
+});
+
+function setupAWSCreds(idToken) {
+    AWS.config.region = COGNITO_CONFIG.Region;
+
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
+        Logins: {
+            [`cognito-idp.${COGNITO_CONFIG.Region}.amazonaws.com/${COGNITO_CONFIG.UserPoolId}`]:
+                idToken
+        }
+    });
+
+    AWS.config.credentials.get(err => {
+        if (err) return showError("AWS credential error");
+
+        loginBox.classList.add("hidden");
+        companionContainer.classList.remove("hidden");
+        connectWebSocket();
+    });
+}
+
+/* ==================== WEBSOCKET ==================== */
+async function connectWebSocket() {
+    if (socket && socket.readyState === WebSocket.OPEN) return;
+
+    socket = new WebSocket("wss://xkl5ptgrai.execute-api.us-east-1.amazonaws.com/prod");
+    socket.binaryType = "arraybuffer";
+
+    socket.onopen = () => console.log("WS OPEN");
+
+    socket.onmessage = async evt => {
+        if (typeof evt.data === "string") {
+            const msg = JSON.parse(evt.data);
+
+            if (msg.type === "session") sessionId = msg.sessionId;
+            if (msg.type === "speech_start") setModelTalking(true);
+            if (msg.type === "speech_end") setModelTalking(false);
+
+            return;
+        }
+
+        // Audio chunk
+        const buf = await audioCtx.decodeAudioData(evt.data.slice(0));
+        playBuffer(buf);
+    };
+
+    socket.onclose = () => console.log("WS CLOSED");
+    socket.onerror = e => console.error("WS ERROR", e);
+}
+
+/* ==================== AUDIO ==================== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let playbackQueue = Promise.resolve();
+
+function playBuffer(buffer) {
+    playbackQueue = playbackQueue.then(
+        () =>
+            new Promise(res => {
+                const src = audioCtx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(audioCtx.destination);
+                src.onended = res;
+                src.start();
+            })
+    );
+}
+
+/* ==================== STREAMING ==================== */
+async function startStreaming() {
+    await connectWebSocket();
+
+    if (!mediaStream) {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+
+    recorder = new MediaRecorder(mediaStream, { mimeType: "audio/webm;codecs=opus" });
+
+    recorder.ondataavailable = e => {
+        if (e.data.size > 0 && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "audio_chunk", sessionId }));
+            socket.send(e.data);
+        }
+    };
+
+    socket.send(JSON.stringify({
+        type: "start_session",
+        user: "user"
+    }));
+
+    recorder.start(200);
+    streaming = true;
+}
+
+function stopStreaming() {
+    if (recorder && recorder.state === "recording") recorder.stop();
+
+    socket?.send(JSON.stringify({ type: "end_session", sessionId }));
+
+    streaming = false;
+}
+
+/* ==================== USER INTERACTION ==================== */
+document.getElementById("companionFace").addEventListener("click", async () => {
+    if (!streaming) await startStreaming();
+    else stopStreaming();
+});
+
+/* ==================== UTILS ==================== */
+function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.classList.remove("hidden");
+}
+function hideError() {
+    errorEl.classList.add("hidden");
+}
+
+/* ==================== SIGN OUT ==================== */
+document.getElementById("signOutButton").addEventListener("click", () => {
+    pool.getCurrentUser()?.signOut();
+    location.reload();
+});
+</script>
+</body>
+</html>
