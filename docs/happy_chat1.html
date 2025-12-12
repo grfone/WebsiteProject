@@ -7,11 +7,10 @@
     <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Correct current ElevenLabs embed script -->
+    <!-- NEW EMBED SCRIPT (this is the one that actually shows the mic/button) -->
     <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 </head>
 <body class="bg-gray-100 font-sans">
-
 <header class="relative bg-cover bg-center h-64 flex items-center justify-center" style="background-image: url('images/banner.jpg')">
     <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
 </header>
@@ -26,7 +25,6 @@
 </nav>
 
 <main class="max-w-5xl mx-auto my-10 px-6">
-
     <!-- LOGIN BOX -->
     <div id="loginBox" class="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-10 text-center">
         <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
@@ -39,24 +37,26 @@
                 </svg>
             </button>
         </div>
-        <button id="signInButton" class="w-full bg-blue-600 text-white py-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+        <button id="signInButton" class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
             Sign In
         </button>
         <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
 
-    <!-- COMPANION AREA - shown after "login" -->
-    <div id="companionContainer" class="hidden flex flex-col items-center mt-16 space-y-12">
-        <img src="images/heartwarming_scene.jpg"
+    <!-- COMPANION AREA (shown after login) -->
+    <div id="companionContainer" class="hidden flex flex-col items-center mt-16 space-y-10">
+        <!-- Bigger heartwarming image -->
+        <img id="sceneImage"
+             src="images/heartwarming_scene.jpg"
              alt="Heartwarming scene"
-             class="w-full max-w-3xl rounded-2xl shadow-2xl" />
+             class="w-full max-w-2xl rounded-2xl shadow-2xl" />
 
+        <!-- NEW WIDGET WITH YOUR AGENT ID -->
         <elevenlabs-convai
             agent-id="agent_7001kc96ge93fwtrmpw4vt2qe70c"
-            class="w-full max-w-3xl">
+            class="w-full max-w-2xl">
         </elevenlabs-convai>
     </div>
-
 </main>
 
 <script>
@@ -66,6 +66,7 @@ function showError(msg) {
     el.classList.remove("hidden");
 }
 
+// Fake login – just hides login box and shows companion
 document.getElementById("signInButton").onclick = () => {
     const email = document.getElementById("username").value.trim();
     const pass = document.getElementById("password").value;
@@ -76,19 +77,29 @@ document.getElementById("signInButton").onclick = () => {
     document.getElementById("companionContainer").classList.remove("hidden");
 };
 
+// Toggle password visibility
 document.getElementById("togglePassword").onclick = () => {
     const p = document.getElementById("password");
     p.type = p.type === "password" ? "text" : "password";
 };
+
+// Listen for call events to swap image (optional fun feature you already had)
+window.addEventListener("message", (e) => {
+    if (e.data?.event === "agent_call_started") {
+        document.getElementById("sceneImage").src = "images/old_grandma.png";
+    }
+    if (e.data?.event === "agent_call_ended") {
+        location.reload(); // or just reset image if you prefer
+    }
+});
 </script>
 
 <style>
+    /* Optional: make the widget look nicer */
     elevenlabs-convai::part(button) {
-        background: #1d4ed8 !important;
+        background: #2563eb !important;
         border-radius: 9999px !important;
-        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4) !important;
     }
 </style>
-
 </body>
 </html>
