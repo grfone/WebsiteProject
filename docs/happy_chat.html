@@ -36,11 +36,10 @@
         <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
     <div id="companionContainer" class="hidden flex flex-col items-center mt-10 space-y-6">
-        <img id="sceneImage" src="images/heartwarming_scene.jpg" class="w-96 rounded-xl shadow-lg" />
-        <elevenlabs-convai
-            agent-id="agent_04014kazvgw3fq8tr5hlamp02e5m"
-            class="w-full"
-        ></elevenlabs-convai>
+        <img id="sceneImage" src="images/heartwarming_scene.jpg" class="w-full max-w-5xl h-[70vh] object-cover rounded-2xl shadow-lg" />
+        <div class="w-full max-w-3xl p-4 bg-white rounded-2xl shadow-lg">
+  <elevenlabs-convai agent-id="agent_04014kazvgw3fq8tr5hlamp02e5m"></elevenlabs-convai>
+</div>
     </div>
 </main>
 <script>
