@@ -3,23 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GRF - Happy Chat</title>
+    <title>GRF - Happy Chat (100% SDK v3)</title>
     <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Cognito Identity SDK (v2) -->
-    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
-    <!-- AWS SDK v2 (for Cognito only) -->
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1400.0.min.js"></script>
-    <!-- AWS SDK v3 Bedrock Runtime (ES module) -->
-    <script type="module">
-        import { BedrockRuntimeClient, InvokeModelWithBidirectionalStreamCommand } from 'https://cdn.skypack.dev/@aws-sdk/client-bedrock-runtime';
-        window.BedrockRuntimeClient = BedrockRuntimeClient;
-        window.InvokeModelWithBidirectionalStreamCommand = InvokeModelWithBidirectionalStreamCommand;
-    </script>
 </head>
 
 <body class="bg-gray-100 font-sans">
+<!-- Your header/nav same as before -->
 <header class="relative bg-cover bg-center h-64 flex items-center justify-center"
         style="background-image: url('images/banner.jpg')">
     <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
@@ -28,224 +18,125 @@
 <nav class="bg-blue-600 text-white p-4">
     <ul class="flex justify-center space-x-8">
         <li><a href="index.html" class="hover:underline">Home</a></li>
-        <li><a href="types_of_clouds.html" class="hover:underline">Types of Clouds</a></li>
         <li><a href="happy_chat.html" class="hover:underline font-bold">Happy Chat</a></li>
-        <li><a href="database.html" class="hover:underline">Database</a></li>
     </ul>
 </nav>
 
 <main class="max-w-3xl mx-auto my-10 p-6 text-center">
-
-    <!-- ==================== LOGIN ==================== -->
     <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
         <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
-
-        <input id="username" type="text" placeholder="Username or Email"
-               class="w-full p-4 border rounded-lg text-lg mb-4">
-
-        <div class="relative mb-6">
-            <input id="password" type="password" placeholder="Password"
-                   class="w-full p-4 border rounded-lg text-lg pr-12">
-
-            <button type="button" id="togglePassword"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
-                <svg id="eyeIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path id="eyeIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-            </button>
-        </div>
-
-        <button id="signInButton"
-                class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
-            Sign In
-        </button>
-
-        <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
+        <input id="username" type="email" placeholder="Email" class="w-full p-4 border rounded-lg text-lg mb-4">
+        <input id="password" type="password" placeholder="Password" class="w-full p-4 border rounded-lg text-lg mb-4">
+        <button id="signInButton" class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl">Sign In</button>
+        <p id="loginError" class="text-red-600 mt-4 hidden"></p>
     </div>
 
-    <!-- ==================== COMPANION ==================== -->
     <div id="companionContainer" class="hidden flex flex-col items-center mt-10">
         <h2 class="text-3xl font-semibold mb-6">Your Companion</h2>
-
-        <div id="companionFace"
-             class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center
-                    cursor-pointer hover:scale-105 transition transform">
+        <div id="companionFace" class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 transition">
             <img id="faceImg" src="images/waiting_only.gif" class="w-56 h-56">
         </div>
-
-        <p class="mt-6 text-lg text-gray-700">Click to start talking — click again to stop</p>
-
-        <button id="signOutButton"
-                class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700">
-            Sign Out
-        </button>
+        <p class="mt-6 text-lg">Click to talk</p>
+        <button id="signOutButton" class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg">Sign Out</button>
     </div>
-
 </main>
 
-<script>
-/* ==================== CONFIG ==================== */
-const COGNITO_CONFIG = {
-    UserPoolId: 'us-east-1_dnF4Uj5RY',
-    ClientId: '1eiq8thm150jeapi92ruvi58gk',
-    IdentityPoolId: 'us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580',
-    Region: 'us-east-1'
+<script type="module">
+import { CognitoIdentityProviderClient, InitiateAuthCommand } from "https://cdn.skypack.dev/@aws-sdk/client-cognito-identity-provider";
+import { fromCognitoIdentityPool } from "https://cdn.skypack.dev/@aws-sdk/credential-provider-cognito-identity";
+import { BedrockRuntimeClient, InvokeModelWithBidirectionalStreamCommand } from "https://cdn.skypack.dev/@aws-sdk/client-bedrock-runtime";
+
+const CONFIG = {
+    region: "us-east-1",
+    userPoolId: "us-east-1_dnF4Uj5RY",
+    clientId: "1eiq8thm150jeapi92ruvi58gk",
+    identityPoolId: "us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580"
 };
 
-const MODEL_ID = 'amazon.nova-2-sonic-v1:0';
-const SYSTEM_PROMPT = 'You are a happy companion. Talk about clouds and weather in a fun way.'; // Customize here
-
-const pool = new AmazonCognitoIdentity.CognitoUserPool({
-    UserPoolId: COGNITO_CONFIG.UserPoolId,
-    ClientId: COGNITO_CONFIG.ClientId
-});
-
-/* ==================== ELEMENTS ==================== */
-const loginBox = document.getElementById("loginBox");
-const companionContainer = document.getElementById("companionContainer");
-const errorEl = document.getElementById("loginError");
-
-const faceImg = document.getElementById("faceImg");
-const waitingSrc = "images/waiting_only.gif";
-const talkingSrc = "images/talking_only.gif";
+const MODEL_ID = "amazon.nova-2-sonic-v1:0";
+const SYSTEM_PROMPT = "You are a cheerful cloud expert. Keep answers fun and short.";
 
 let bedrockClient;
-let audioContext;
+let isStreaming = false;
 let mediaRecorder;
 let audioChunks = [];
-let isStreaming = false;
-let modelIsTalking = false;
 
-function updateFace() {
-    faceImg.src = modelIsTalking ? talkingSrc : waitingSrc;
-}
-
-function setModelTalking(state) {
-    modelIsTalking = state;
-    updateFace();
-}
-
-/* ==================== LOGIN ==================== */
-document.getElementById("signInButton").addEventListener("click", () => {
-    const username = document.getElementById("username").value.trim();
+document.getElementById("signInButton").onclick = async () => {
+    const email = document.getElementById("username").value;
     const password = document.getElementById("password").value;
 
-    if (!username || !password) {
-        showError("Please enter username and password");
-        return;
-    }
-    hideError();
-
-    const auth = new AmazonCognitoIdentity.AuthenticationDetails({
-        Username: username,
-        Password: password
-    });
-
-    const user = new AmazonCognitoIdentity.CognitoUser({
-        Username: username,
-        Pool: pool
-    });
-
-    user.authenticateUser(auth, {
-        onSuccess: result => {
-            const idToken = result.getIdToken().getJwtToken();
-            setupAWSCreds(idToken);
-        },
-        onFailure: err => showError(err.message || "Login failed"),
-        newPasswordRequired: () => showError("New password required – not supported here")
-    });
-});
-
-function setupAWSCreds(idToken) {
-    AWS.config.region = COGNITO_CONFIG.Region;
-
-    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-        IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
-        Logins: {
-            [`cognito-idp.${COGNITO_CONFIG.Region}.amazonaws.com/${COGNITO_CONFIG.UserPoolId}`]: idToken
-        }
-    });
-
-    AWS.config.credentials.get(err => {
-        if (err) return showError("AWS credential error: " + err.message);
-
-        // Now create v3 Bedrock client with temp creds
-        bedrockClient = new window.BedrockRuntimeClient({
-            region: COGNITO_CONFIG.Region,
-            credentials: {
-                accessKeyId: AWS.config.credentials.accessKeyId,
-                secretAccessKey: AWS.config.credentials.secretAccessKey,
-                sessionToken: AWS.config.credentials.sessionToken
-            }
-        });
-
-        console.log("Bedrock v3 client ready");
-        loginBox.classList.add("hidden");
-        companionContainer.classList.remove("hidden");
-    });
-}
-
-/* ==================== AUDIO INIT ==================== */
-function initAudio() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    return audioContext;
-}
-
-/* ==================== NOVA STREAM ==================== */
-async function startNovaStream() {
-    if (isStreaming) return;
-    isStreaming = true;
-    setModelTalking(false);
-    initAudio();
+    if (!email || !password) return showError("Fill in email and password");
 
     try {
-        console.log("Starting Nova 2 Sonic stream");
-
-        // Get mic stream (16kHz mono for Nova)
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true }
+        const client = new CognitoIdentityProviderClient({ region: CONFIG.region });
+        const command = new InitiateAuthCommand({
+            AuthFlow: "USER_PASSWORD_AUTH",
+            ClientId: CONFIG.clientId,
+            AuthParameters: { USERNAME: email, PASSWORD: password }
         });
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
-        audioChunks = [];
 
-        mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+        const response = await client.send(command);
+        const idToken = response.AuthenticationResult.IdToken;
 
-        // Start recording
-        mediaRecorder.start();
-        console.log("Recording... Speak now! (Auto-stop in 10s or click to stop)");
+        // Get temporary AWS credentials
+        const credentials = fromCognitoIdentityPool({
+            clientConfig: { region: CONFIG.region },
+            identityPoolId: CONFIG.identityPoolId,
+            logins: { [`cognito-idp.${CONFIG.region}.amazonaws.com/${CONFIG.userPoolId}`]: idToken }
+        });
 
-        // Auto-stop after 10s (or implement VAD for silence detection)
-        setTimeout(() => {
-            if (mediaRecorder.state === 'recording') mediaRecorder.stop();
-        }, 10000);
+        bedrockClient = new BedrockRuntimeClient({
+            region: CONFIG.region,
+            credentials
+        });
 
-        mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-            const arrayBuffer = await audioBlob.arrayBuffer();
-            const uint8Array = new Uint8Array(arrayBuffer);
-            const base64Audio = btoa(String.fromCharCode(...uint8Array));
+        document.getElementById("loginBox").classList.add("hidden");
+        document.getElementById("companionContainer").classList.remove("hidden");
+        console.log("Logged in + Bedrock ready");
+    } catch (err) {
+        showError(err.message || "Login failed");
+    }
+};
 
-            // Build JSON lines events
-            const events = [
-                // System prompt as text content
-                JSON.stringify({ event: { contentStart: { role: "system" } } }) + '\n',
-                JSON.stringify({ event: { content: [{ text: SYSTEM_PROMPT }] } }) + '\n',
-                JSON.stringify({ event: { contentEnd: {} } }) + '\n',
-                // User turn
-                JSON.stringify({ event: { contentStart: { role: "user" } } }) + '\n',
-                JSON.stringify({ event: { content: [{ audioInput: { data: base64Audio, encoding: "base64", sampleRate: 16000 } }] } }) + '\n',
-                JSON.stringify({ event: { contentEnd: {} } }) + '\n',
-                // Session/prompt config and end
-                JSON.stringify({ event: { sessionStart: { inferenceConfiguration: { maxTokens: 1024, temperature: 0.7, topP: 0.9 } } } }) + '\n',
-                JSON.stringify({ event: { promptStart: { promptName: "user", audioOutput: { enabled: true, sampleRate: 24000, format: "pcm" }, textOutput: { enabled: false } } } }) + '\n',
-                JSON.stringify({ event: { promptEnd: {} } }) + '\n',
-                JSON.stringify({ event: { sessionEnd: {} } }) + '\n'
-            ].join('');
+document.getElementById("companionFace").onclick = () => {
+    if (!bedrockClient) return showError("Log in first");
+    if (isStreaming) return stopRecording();
+    startRecordingAndStream();
+};
 
-            const command = new window.InvokeModelWithBidirectionalStreamCommand({
+async function startRecordingAndStream() {
+    isStreaming = true;
+    audioChunks = [];
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { sampleRate: 16000, channelCount: 1 }
+    });
+
+    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/wav" });
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.start();
+
+    setTimeout(() => mediaRecorder.state === "recording" && mediaRecorder.stop(), 8000);
+
+    mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        const base64 = await blobToBase64(audioBlob);
+
+        const events = [
+            JSON.stringify({ event: { sessionStart: { inferenceConfiguration: { temperature: 0.7 } } } }),
+            JSON.stringify({ event: { promptStart: { promptName: "user", audioOutput: { enabled: true } } } }),
+            JSON.stringify({ event: { contentStart: { role: "system" } } }),
+            JSON.stringify({ event: { content: [{ text: SYSTEM_PROMPT }] } }),
+            JSON.stringify({ event: { contentEnd: {} } }),
+            JSON.stringify({ event: { contentStart: { role: "user" } } }),
+            JSON.stringify({ event: { content: [{ audioInput: { data: base64.split(',')[1], encoding: "base64", sampleRate: 16000 } }] } }),
+            JSON.stringify({ event: { contentEnd: {} } }),
+            JSON.stringify({ event: { promptEnd: {} } }),
+            JSON.stringify({ event: { sessionEnd: {} } })
+        ].join("\n");
+
+        try {
+            const command = new InvokeModelWithBidirectionalStreamCommand({
                 modelId: MODEL_ID,
                 contentType: "application/jsonlines",
                 accept: "application/jsonlines",
@@ -253,118 +144,60 @@ async function startNovaStream() {
             });
 
             const response = await bedrockClient.send(command);
-            let fullAudioBase64 = "";
+            let audioBase64 = "";
 
-            // Process output stream
-            const reader = response.Body.getReader();
-            const decoder = new TextDecoder();
-            setModelTalking(true);
-
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n').filter(l => l.trim());
-
-                    for (const line of lines) {
-                        if (line) {
-                            try {
-                                const parsed = JSON.parse(line);
-                                if (parsed.event?.response?.audioOutput?.data) {
-                                    fullAudioBase64 += parsed.event.response.audioOutput.data;
-                                }
-                            } catch (e) {
-                                console.warn("Parse error:", e, line);
-                            }
+            for await (const chunk of response.body) {
+                const text = new TextDecoder().decode(chunk.chunk.bytes);
+                for (const line of text.split("\n").filter(Boolean)) {
+                    try {
+                        const json = JSON.parse(line);
+                        if (json.event?.response?.audioOutput?.data) {
+                            audioBase64 += json.event.response.audioOutput.data;
                         }
-                    }
+                    } catch {}
                 }
-            } finally {
-                reader.releaseLock();
             }
 
-            // Play audio
-            if (fullAudioBase64) {
-                const audioBlob = base64ToAudioBlob(fullAudioBase64, 'audio/wav');
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                await audio.play();
-                audio.onended = () => {
-                    setModelTalking(false);
-                    URL.revokeObjectURL(audioUrl);
-                };
-                console.log("Playing Nova response");
-            } else {
-                console.warn("No audio from Nova");
-                setModelTalking(false);
+            if (audioBase64) {
+                const audio = new Audio(URL.createObjectURL(base64ToBlob(audioBase64)));
+                audio.play();
             }
-
-            stream.getTracks().forEach(track => track.stop());
+        } catch (err) {
+            console.error(err);
+            showError("Nova error: " + err.message);
+        } finally {
+            stream.getTracks().forEach(t => t.stop());
             isStreaming = false;
-        };
-
-    } catch (err) {
-        console.error("Nova error:", err);
-        showError("Chat error: " + (err.message || err.name));
-        setModelTalking(false);
-        isStreaming = false;
-    }
+        }
+    };
 }
 
-function stopNovaStream() {
-    if (mediaRecorder?.state === 'recording') mediaRecorder.stop();
+function stopRecording() {
+    if (mediaRecorder?.state === "recording") mediaRecorder.stop();
     isStreaming = false;
-    setModelTalking(false);
 }
 
-/* ==================== INTERACTION ==================== */
-document.getElementById("companionFace").addEventListener("click", () => {
-    if (!bedrockClient) return showError("Please log in");
-    if (!isStreaming) {
-        startNovaStream();
-    } else {
-        stopNovaStream();
-    }
-});
-
-/* ==================== UTILS ==================== */
-function showError(msg) {
-    errorEl.textContent = msg;
-    errorEl.classList.remove("hidden");
-}
-function hideError() {
-    errorEl.classList.add("hidden");
+function blobToBase64(blob) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+    });
 }
 
-function base64ToAudioBlob(base64, type) {
+function base64ToBlob(base64) {
     const binary = atob(base64);
-    const array = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
-    // Add WAV header for LPCM (simple 24kHz mono)
-    const wavHeader = new Uint8Array(44);
-    const view = new DataView(wavHeader.buffer);
-    view.setUint32(0, 0x46464952, false); // RIFF
-    view.setUint32(4, array.length + 36, true); // File size
-    view.setUint32(8, 0x45564157, false); // WAVE
-    view.setUint32(12, 0x20746D66, false); // fmt
-    view.setUint32(16, 16, true); // Format chunk size
-    view.setUint16(20, 1, true); // PCM
-    view.setUint16(22, 1, true); // Channels (mono)
-    view.setUint32(24, 24000, true); // Sample rate
-    view.setUint32(28, 24000 * 2, true); // Byte rate
-    view.setUint16(32, 2, true); // Block align
-    view.setUint16(34, 16, true); // Bits per sample
-    view.setUint32(36, 0x61746164, false); // data
-    view.setUint32(40, array.length, true); // Data size
-    return new Blob([wavHeader, array], { type });
+    const array = Uint8Array.from(binary, c => c.charCodeAt(0));
+    return new Blob([array], { type: "audio/wav" });
 }
 
-/* ==================== SIGN OUT ==================== */
-document.getElementById("signOutButton").addEventListener("click", () => {
-    pool.getCurrentUser()?.signOut();
-    location.reload();
-});
+function showError(msg) {
+    const el = document.getElementById("loginError");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+}
+
+document.getElementById("signOutButton").onclick = () => location.reload();
 </script>
 </body>
 </html>
