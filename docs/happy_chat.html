@@ -1,276 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GRF - Happy Chat</title>
-    <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>GRF - Happy Chat (Nova 2 Sonic, direct)</title>
+<link rel="icon" href="images/favicon_16_to_1024.ico">
+<script>
+  /* quick Tailwind dev warning suppressed intentionally */
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Cognito Identity SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
-    <!-- AWS SDK (v2 – needed for CognitoIdentityCredentials) -->
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+<!-- Cognito Identity SDK (v1) - used only to authenticate user and populate AWS.config.credentials -->
+<script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
+<!-- AWS SDK v2 included so we can call Cognito Identity credentials.get() - optional, used to populate temporary creds -->
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
 </head>
-
 <body class="bg-gray-100 font-sans">
-<header class="relative bg-cover bg-center h-64 flex items-center justify-center"
-        style="background-image: url('images/banner.jpg')">
-    <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
+
+<header class="relative bg-cover bg-center h-48 flex items-center justify-center"
+        style="background-image:url('images/banner.jpg')">
+  <h1 class="text-5xl text-white font-bold drop-shadow-lg">GRF</h1>
 </header>
 
-<nav class="bg-blue-600 text-white p-4">
-    <ul class="flex justify-center space-x-8">
-        <li><a href="index.html" class="hover:underline">Home</a></li>
-        <li><a href="types_of_clouds.html" class="hover:underline">Types of Clouds</a></li>
-        <li><a href="happy_chat.html" class="hover:underline font-bold">Happy Chat</a></li>
-        <li><a href="database.html" class="hover:underline">Database</a></li>
-    </ul>
+<nav class="bg-blue-600 text-white p-3">
+  <ul class="flex justify-center gap-8">
+    <li><a href="index.html" class="hover:underline">Home</a></li>
+    <li><a href="types_of_clouds.html" class="hover:underline">Types of Clouds</a></li>
+    <li><a href="happy_chat.html" class="hover:underline font-bold">Happy Chat</a></li>
+    <li><a href="database.html" class="hover:underline">Database</a></li>
+  </ul>
 </nav>
 
-<main class="max-w-3xl mx-auto my-10 p-6 text-center">
+<main class="max-w-3xl mx-auto my-8 p-6 text-center">
+  <div id="loginBox" class="bg-white p-8 rounded-lg shadow-lg">
+    <h2 class="text-2xl font-semibold mb-6">Happy Chat Login</h2>
+    <input id="username" placeholder="Username or Email" class="w-full p-3 border rounded mb-4" />
+    <div class="relative mb-4">
+      <input id="password" type="password" placeholder="Password" class="w-full p-3 border rounded" />
+    </div>
+    <button id="signInButton" class="w-full bg-blue-600 text-white p-3 rounded">Sign In</button>
+    <p id="loginError" class="text-red-600 mt-3 hidden"></p>
+  </div>
 
-    <!-- ==================== LOGIN ==================== -->
-    <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
-        <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
+  <div id="companionContainer" class="hidden mt-8 flex flex-col items-center">
+    <h2 class="text-2xl font-semibold mb-4">Your Companion</h2>
 
-        <input id="username" type="text" placeholder="Username or Email"
-               class="w-full p-4 border rounded-lg text-lg mb-4">
-
-        <div class="relative mb-6">
-            <input id="password" type="password" placeholder="Password"
-                   class="w-full p-4 border rounded-lg text-lg pr-12">
-
-            <button type="button" id="togglePassword"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
-                <svg id="eyeIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path id="eyeIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-            </button>
-        </div>
-
-        <button id="signInButton"
-                class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
-            Sign In
-        </button>
-
-        <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
+    <div id="companionFace" class="w-64 h-64 bg-yellow-200 rounded-full shadow flex items-center justify-center cursor-pointer">
+      <img id="faceImg" src="images/waiting_only.gif" class="w-56 h-56" />
     </div>
 
-    <!-- ==================== COMPANION ==================== -->
-    <div id="companionContainer" class="hidden flex flex-col items-center mt-10">
-        <h2 class="text-3xl font-semibold mb-6">Your Companion</h2>
+    <p class="mt-4 text-gray-700">Click once to start streaming; click again to stop</p>
 
-        <div id="companionFace"
-             class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center
-                    cursor-pointer hover:scale-105 transition transform">
-            <img id="faceImg" src="images/waiting_only.gif" class="w-56 h-56">
-        </div>
-
-        <p class="mt-6 text-lg text-gray-700">Tap once to start talking — tap again to stop</p>
-
-        <button id="signOutButton"
-                class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700">
-            Sign Out
-        </button>
+    <div class="mt-6">
+      <button id="signOutButton" class="bg-gray-600 text-white px-6 py-2 rounded">Sign Out</button>
     </div>
 
+    <p id="status" class="mt-4 text-sm text-gray-600"></p>
+  </div>
 </main>
 
-<script>
-/* ==================== CONFIG ==================== */
+<!-- Main logic as ES module so we can import the SDK from jsDelivr -->
+<script type="module">
+/*
+  Direct Bedrock bidirectional streaming (Option B) using @aws-sdk/client-bedrock-runtime (v3)
+  - Uses Cognito userPool authentication (amazon-cognito-identity-js) to get idToken
+  - Exchanges idToken for Cognito Identity temporary AWS credentials (AWS.config.credentials)
+  - Creates BedrockRuntimeClient with those temporary creds
+  - Builds a ReadableStream that the SDK will use as the request body to push events & audio
+  - Reads the response stream and plays audio events; listens for speech_start/speech_end to animate
+*/
+
+/* --------- Replace with your Cognito values (already provided) --------- */
 const COGNITO_CONFIG = {
-    UserPoolId: 'us-east-1_dnF4Uj5RY',
-    ClientId: '1eiq8thm150jeapi92ruvi58gk',
-    IdentityPoolId: 'us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580',
-    Region: 'us-east-1'
+  UserPoolId: 'us-east-1_dnF4Uj5RY',
+  ClientId: '1eiq8thm150jeapi92ruvi58gk',
+  IdentityPoolId: 'us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580',
+  Region: 'us-east-1'
 };
 
-const pool = new AmazonCognitoIdentity.CognitoUserPool({
-    UserPoolId: COGNITO_CONFIG.UserPoolId,
-    ClientId: COGNITO_CONFIG.ClientId
-});
+/* ----------------- Imports from CDN (ESM) -----------------
+   This loads the Bedrock Runtime client from jsDelivr.
+   If the import path ever changes, swap with the package's dist-es entrypoint.
+*/
+import { BedrockRuntimeClient, InvokeModelWithBidirectionalStreamCommand } from 'https://cdn.jsdelivr.net/npm/@aws-sdk/client-bedrock-runtime/dist-es/index.js';
 
-/* ==================== ELEMENTS ==================== */
-const loginBox = document.getElementById("loginBox");
-const companionContainer = document.getElementById("companionContainer");
-const errorEl = document.getElementById("loginError");
+const loginBox = document.getElementById('loginBox');
+const companionContainer = document.getElementById('companionContainer');
+const loginError = document.getElementById('loginError');
+const faceImg = document.getElementById('faceImg');
+const statusEl = document.getElementById('status');
 
-const faceImg = document.getElementById("faceImg");
-const waitingSrc = "images/waiting_only.gif";
-const talkingSrc = "images/talking_only.gif";
+const waitingSrc = 'images/waiting_only.gif';
+const talkingSrc = 'images/talking_only.gif';
 
-let socket;
-let mediaStream;
-let recorder;
+let bedrockClient = null;
+let streamingController = null;
+let mediaStream = null;
+let recorder = null;
 let streaming = false;
 let sessionId = null;
 
-let userIsTalking = false;
 let modelIsTalking = false;
+function setModelTalking(v) { modelIsTalking = v; faceImg.src = v ? talkingSrc : waitingSrc; }
 
-function updateFace() {
-    faceImg.src = modelIsTalking ? talkingSrc : waitingSrc;
-}
-
-function setModelTalking(state) {
-    modelIsTalking = state;
-    updateFace();
-}
-
-/* ==================== LOGIN ==================== */
-document.getElementById("signInButton").addEventListener("click", () => {
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value;
-
-    if (!username || !password) {
-        showError("Please enter username and password");
-        return;
-    }
-    hideError();
-
-    const auth = new AmazonCognitoIdentity.AuthenticationDetails({
-        Username: username,
-        Password: password
-    });
-
-    const user = new AmazonCognitoIdentity.CognitoUser({
-        Username: username,
-        Pool: pool
-    });
-
-    user.authenticateUser(auth, {
-        onSuccess: result => {
-            const idToken = result.getIdToken().getJwtToken();
-            setupAWSCreds(idToken);
-        },
-        onFailure: err => showError(err.message || "Login failed"),
-        newPasswordRequired: () =>
-            showError("New password required – not supported here")
-    });
+/* -----------------------------------------------------
+   Cognito UserPool sign-in (using amazon-cognito-identity-js)
+   This part uses the v1 Cognito library you already include.
+-----------------------------------------------------*/
+const pool = new AmazonCognitoIdentity.CognitoUserPool({
+  UserPoolId: COGNITO_CONFIG.UserPoolId,
+  ClientId: COGNITO_CONFIG.ClientId
 });
 
-function setupAWSCreds(idToken) {
-    AWS.config.region = COGNITO_CONFIG.Region;
+document.getElementById('signInButton').addEventListener('click', () => {
+  hideLoginError();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  if (!username || !password) {
+    showLoginError('Enter username & password');
+    return;
+  }
 
-    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-        IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
-        Logins: {
-            [`cognito-idp.${COGNITO_CONFIG.Region}.amazonaws.com/${COGNITO_CONFIG.UserPoolId}`]:
-                idToken
-        }
-    });
+  const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({ Username: username, Password: password });
+  const cognitoUser = new AmazonCognitoIdentity.CognitoUser({ Username: username, Pool: pool });
 
+  cognitoUser.authenticateUser(authDetails, {
+    onSuccess: async (result) => {
+      const idToken = result.getIdToken().getJwtToken();
+      try {
+        await exchangeIdTokenForAwsCreds(idToken);
+        await initBedrockClient();
+        loginBox.classList.add('hidden');
+        companionContainer.classList.remove('hidden');
+        status('Ready — click the face to start streaming');
+      } catch (err) {
+        console.error('Creds/init error', err);
+        showLoginError('Initialization error: ' + (err.message || err));
+      }
+    },
+    onFailure: err => showLoginError(err.message || JSON.stringify(err)),
+    newPasswordRequired: () => showLoginError('New password required (not supported here)')
+  });
+});
+
+function showLoginError(msg) { loginError.textContent = msg; loginError.classList.remove('hidden'); }
+function hideLoginError() { loginError.classList.add('hidden'); }
+function status(txt) { statusEl.textContent = txt; }
+
+/* Exchange the ID token for temporary AWS credentials using AWS SDK v2's CognitoIdentityCredentials */
+async function exchangeIdTokenForAwsCreds(idToken) {
+  AWS.config.region = COGNITO_CONFIG.Region;
+  AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+    IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
+    Logins: {
+      [`cognito-idp.${COGNITO_CONFIG.Region}.amazonaws.com/${COGNITO_CONFIG.UserPoolId}`]: idToken
+    }
+  });
+
+  return new Promise((resolve, reject) => {
     AWS.config.credentials.get(err => {
-        if (err) return showError("AWS credential error");
-
-        loginBox.classList.add("hidden");
-        companionContainer.classList.remove("hidden");
-        connectWebSocket();
+      if (err) return reject(err);
+      // Now AWS.config.credentials contains accessKeyId, secretAccessKey, sessionToken
+      resolve();
     });
+  });
 }
 
-/* ==================== WEBSOCKET ==================== */
-async function connectWebSocket() {
-    if (socket && socket.readyState === WebSocket.OPEN) return;
+/* Instantiate BedrockRuntimeClient with the temporary creds */
+async function initBedrockClient() {
+  const creds = {
+    accessKeyId: AWS.config.credentials.accessKeyId,
+    secretAccessKey: AWS.config.credentials.secretAccessKey,
+    sessionToken: AWS.config.credentials.sessionToken
+  };
 
-    socket = new WebSocket("wss://xkl5ptgrai.execute-api.us-east-1.amazonaws.com/prod");
-    socket.binaryType = "arraybuffer";
+  bedrockClient = new BedrockRuntimeClient({
+    region: COGNITO_CONFIG.Region,
+    credentials: creds
+  });
+}
 
-    socket.onopen = () => console.log("WS OPEN");
+/* -----------------------------
+  Bidirectional stream implementation
+   We'll:
+   - Create a ReadableStream (outgoing) and write JSON control events and audio chunks into it.
+   - Call InvokeModelWithBidirectionalStreamCommand with body = outgoing stream
+   - Read the response stream and handle events + audio chunks.
+--------------------------------*/
+async function startPushStreaming() {
+  if (!bedrockClient) throw new Error('Bedrock client not initialized');
 
-    socket.onmessage = async evt => {
-        if (typeof evt.data === "string") {
-            const msg = JSON.parse(evt.data);
+  if (!mediaStream) {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1 } });
+  }
 
-            if (msg.type === "session") sessionId = msg.sessionId;
-            if (msg.type === "speech_start") setModelTalking(true);
-            if (msg.type === "speech_end") setModelTalking(false);
+  // We'll use MediaRecorder to capture chunks (webm/opus) and push those bytes through the request stream.
+  recorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm;codecs=opus' });
 
-            return;
+  const encoder = new TextEncoder();
+
+  // Controller and queue for outgoing stream
+  let push;
+  const outgoing = new ReadableStream({
+    start(controller) {
+      push = chunk => controller.enqueue(chunk);
+      streamingController = controller;
+      // first event: session start metadata (you may include any model params here)
+      const startEvent = {
+        type: 'session_start',
+        modelId: 'amazon.nova-2-sonic-v1:0',
+        // any additional metadata the model expects can go here
+      };
+      controller.enqueue(encoder.encode(JSON.stringify(startEvent) + '\n'));
+    },
+    pull() { /* no-op */ },
+    cancel(reason) {
+      console.log('Outgoing stream canceled', reason);
+    }
+  });
+
+  // Handle MediaRecorder chunk -> push to outgoing
+  recorder.ondataavailable = (e) => {
+    if (e.data && e.data.size > 0) {
+      // read as arrayBuffer and push raw bytes
+      const reader = new FileReader();
+      reader.onload = () => {
+        const bytes = new Uint8Array(reader.result);
+        push(bytes);
+      };
+      reader.readAsArrayBuffer(e.data);
+    }
+  };
+
+  recorder.onstop = () => {
+    // send end_of_stream event (model will finalize)
+    const endEvent = { type: 'end_of_input' };
+    push(encoder.encode(JSON.stringify(endEvent) + '\n'));
+    // close the outgoing stream after a tiny delay to ensure event gets sent
+    setTimeout(() => streamingController.close(), 100);
+  };
+
+  // Prepare command
+  const command = new InvokeModelWithBidirectionalStreamCommand({
+    modelId: 'amazon.nova-2-sonic-v1:0',
+    // contentType/accept headers may be required by the model — leaving model-specific handling to the runtime
+    body: outgoing
+  });
+
+  status('Opening Bedrock bidirectional stream…');
+
+  // Send command - returns a response with a readable stream body
+  const response = await bedrockClient.send(command);
+
+  // Response body is a stream of events + audio chunks. We'll read it using the response.body (a ReadableStream)
+  // NOTE: SDK may expose different shapes depending on environment; attempt to read as async iterable if provided
+  const respBody = response?.body;
+  if (!respBody) throw new Error('No response body from Bedrock');
+
+  // Helper: read chunks from response stream and parse
+  // We attempt two strategies: if body is an async iterable, use for await; otherwise use getReader()
+  if (respBody[Symbol.asyncIterator]) {
+    // async iterable case
+    (async () => {
+      for await (const chunk of respBody) {
+        await handleIncomingChunk(chunk);
+      }
+      console.log('Bedrock response stream ended (iterable).');
+      status('Connection closed by Bedrock');
+      setModelTalking(false);
+      streaming = false;
+    })();
+  } else if (typeof respBody.getReader === 'function') {
+    const reader = respBody.getReader();
+    const decoder = new TextDecoder();
+    (async () => {
+      let reading = true;
+      while (reading) {
+        const { value, done } = await reader.read();
+        if (done) {
+          reading = false;
+          break;
         }
+        await handleIncomingChunk(value);
+      }
+      console.log('Bedrock response stream ended (getReader).');
+      status('Connection closed by Bedrock');
+      setModelTalking(false);
+      streaming = false;
+    })();
+  } else {
+    throw new Error('Unsupported response body type from Bedrock SDK');
+  }
 
-        // Audio chunk
-        const buf = await audioCtx.decodeAudioData(evt.data.slice(0));
-        playBuffer(buf);
-    };
-
-    socket.onclose = () => console.log("WS CLOSED");
-    socket.onerror = e => console.error("WS ERROR", e);
+  // Start the recorder after opening the stream
+  recorder.start(200); // 200ms chunks
+  streaming = true;
+  status('Streaming mic → Nova (click face to stop)');
 }
 
-/* ==================== AUDIO ==================== */
+/* Handle incoming chunk from model.
+   Model will emit event-like JSON lines and binary audio frames.
+   We'll try to parse incoming bytes: if chunk starts with "{" treat as JSON text event (newline delimited).
+   Otherwise treat as audio bytes (encoded audio).
+   This parsing is model/runtime specific — if your model sends framed bytes/events differently you may need to adapt.
+*/
+const incomingTextDecoder = new TextDecoder();
+
+async function handleIncomingChunk(chunk) {
+  // chunk may be Uint8Array or ArrayBuffer
+  let bytes;
+  if (chunk instanceof ArrayBuffer) bytes = new Uint8Array(chunk);
+  else if (chunk instanceof Uint8Array) bytes = chunk;
+  else if (chunk?.buffer instanceof ArrayBuffer) bytes = new Uint8Array(chunk.buffer);
+  else {
+    console.warn('Unknown chunk type', chunk);
+    return;
+  }
+
+  // Heuristic: if the chunk starts with ASCII "{" or "[" treat as JSON text event (newline-separated)
+  const first = bytes[0];
+  if (first === 0x7b || first === 0x5b) { // '{' or '['
+    const txt = incomingTextDecoder.decode(bytes);
+    try {
+      // Some responses send newline-delimited JSON events; split and parse each line
+      for (const line of txt.split(/\r?\n/)) {
+        if (!line.trim()) continue;
+        let msg;
+        try { msg = JSON.parse(line); } catch (e) { console.warn('JSON parse failed for line', line); continue; }
+        if (msg.type === 'session') sessionId = msg.sessionId;
+        if (msg.type === 'speech_start') setModelTalking(true);
+        if (msg.type === 'speech_end') setModelTalking(false);
+        if (msg.type === 'emotion') { /* optionally map to face effects */ }
+        // other events...
+      }
+    } catch (e) {
+      console.error('Failed to parse incoming JSON event', e);
+    }
+    return;
+  }
+
+  // Otherwise treat chunk as audio PCM/encoded audio; we'll attempt to decode and play
+  try {
+    // Some models stream raw PCM; some stream encoded audio (e.g. opus/webm). We'll try decodeAudioData for whatever we receive.
+    const audioBuf = await audioCtx.decodeAudioData(bytes.buffer.slice(0));
+    playBuffer(audioBuf);
+  } catch (e) {
+    // decodeAudioData can fail if bytes are not a supported container
+    // If model sends encoded audio container (webm/opus), you may need a different path (Media Source Extensions) or construct a Blob URL
+    // We'll fallback to creating a Blob and playing it (may have more latency)
+    try {
+      const blob = new Blob([bytes], { type: 'audio/webm;codecs=opus' });
+      const url = URL.createObjectURL(blob);
+      const a = new Audio(url);
+      a.play().catch(err => console.warn('Audio play failed', err));
+      // cleanup after short delay
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (err) {
+      console.error('Could not play incoming audio chunk', err);
+    }
+  }
+}
+
+/* Audio playback helpers */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let playbackQueue = Promise.resolve();
-
 function playBuffer(buffer) {
-    playbackQueue = playbackQueue.then(
-        () =>
-            new Promise(res => {
-                const src = audioCtx.createBufferSource();
-                src.buffer = buffer;
-                src.connect(audioCtx.destination);
-                src.onended = res;
-                src.start();
-            })
-    );
+  playbackQueue = playbackQueue.then(() => new Promise(resolve => {
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(audioCtx.destination);
+    src.onended = resolve;
+    src.start();
+  }));
 }
 
-/* ==================== STREAMING ==================== */
-async function startStreaming() {
-    await connectWebSocket();
+/* Stop streaming and close outgoing stream */
+async function stopPushStreaming() {
+  if (!streaming) return;
+  // stop MediaRecorder; onstop handler will enqueue end_of_input and close outgoing stream
+  recorder && recorder.state === 'recording' && recorder.stop();
 
-    if (!mediaStream) {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  // mark UI
+  streaming = false;
+  status('Stopping…');
+  // Let the response stream finish naturally; model will emit final speech_end and then close
+}
+
+/* UI: toggle start/stop on companion face click */
+document.getElementById('companionFace').addEventListener('click', async () => {
+  try {
+    if (!streaming) {
+      await startPushStreaming();
+    } else {
+      await stopPushStreaming();
     }
-
-    recorder = new MediaRecorder(mediaStream, { mimeType: "audio/webm;codecs=opus" });
-
-    recorder.ondataavailable = e => {
-        if (e.data.size > 0 && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "audio_chunk", sessionId }));
-            socket.send(e.data);
-        }
-    };
-
-    socket.send(JSON.stringify({
-        type: "start_session",
-        user: "user"
-    }));
-
-    recorder.start(200);
-    streaming = true;
-}
-
-function stopStreaming() {
-    if (recorder && recorder.state === "recording") recorder.stop();
-
-    socket?.send(JSON.stringify({ type: "end_session", sessionId }));
-
-    streaming = false;
-}
-
-/* ==================== USER INTERACTION ==================== */
-document.getElementById("companionFace").addEventListener("click", async () => {
-    if (!streaming) await startStreaming();
-    else stopStreaming();
+  } catch (err) {
+    console.error('Streaming error', err);
+    status('Streaming error: ' + (err.message || err));
+  }
 });
 
-/* ==================== UTILS ==================== */
-function showError(msg) {
-    errorEl.textContent = msg;
-    errorEl.classList.remove("hidden");
-}
-function hideError() {
-    errorEl.classList.add("hidden");
-}
-
-/* ==================== SIGN OUT ==================== */
-document.getElementById("signOutButton").addEventListener("click", () => {
-    pool.getCurrentUser()?.signOut();
-    location.reload();
+/* Sign out */
+document.getElementById('signOutButton').addEventListener('click', () => {
+  pool.getCurrentUser()?.signOut();
+  location.reload();
 });
+
 </script>
 </body>
 </html>
+
