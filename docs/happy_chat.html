@@ -1,367 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GRF - Happy Chat (debug)</title>
-  <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
-  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
-  <style>
-    /* debug visuals */
-    #companionFace.debug-highlight { outline: 3px dashed rgba(34,197,94,0.6); }
-    #debugConsole {
-      position: fixed;
-      right: 12px;
-      bottom: 12px;
-      width: 360px;
-      max-height: 50vh;
-      overflow: auto;
-      background: rgba(17,24,39,0.95);
-      color: #e6eef8;
-      font-family: monospace;
-      font-size: 12px;
-      padding: 8px;
-      border-radius: 8px;
-      z-index: 9999;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
-    }
-    #debugConsole header { font-weight: 700; margin-bottom: 6px; display:flex; justify-content:space-between; gap:8px; }
-    #debugConsole button { background: transparent; color: #9ca3af; border: none; cursor: pointer; }
-    #debugConsole pre { white-space: pre-wrap; word-break: break-word; margin:0; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRF - Happy Chat</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Cognito Identity SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
+    <!-- AWS SDK (v2 – needed for CognitoIdentityCredentials) -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
 </head>
+
 <body class="bg-gray-100 font-sans">
-  <header class="relative bg-cover bg-center h-64 flex items-center justify-center"
-          style="background-image: url('images/banner.jpg')">
+<header class="relative bg-cover bg-center h-64 flex items-center justify-center"
+        style="background-image: url('images/banner.jpg')">
     <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
-  </header>
+</header>
 
-  <nav class="bg-blue-600 text-white p-4">
+<nav class="bg-blue-600 text-white p-4">
     <ul class="flex justify-center space-x-8">
-      <li><a href="index.html" class="hover:underline">Home</a></li>
-      <li><a href="types_of_clouds.html" class="hover:underline">Types of Clouds</a></li>
-      <li><a href="happy_chat.html" class="hover:underline font-bold">Happy Chat</a></li>
-      <li><a href="database.html" class="hover:underline">Database</a></li>
+        <li><a href="index.html" class="hover:underline">Home</a></li>
+        <li><a href="types_of_clouds.html" class="hover:underline">Types of Clouds</a></li>
+        <li><a href="happy_chat.html" class="hover:underline font-bold">Happy Chat</a></li>
+        <li><a href="database.html" class="hover:underline">Database</a></li>
     </ul>
-  </nav>
+</nav>
 
-  <main class="max-w-3xl mx-auto my-10 p-6 text-center">
+<main class="max-w-3xl mx-auto my-10 p-6 text-center">
+
+    <!-- ==================== LOGIN ==================== -->
     <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
-      <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
-      <input id="username" type="text" placeholder="Username or Email" class="w-full p-4 border rounded-lg text-lg mb-4">
-      <div class="relative mb-6">
-        <input id="password" type="password" placeholder="Password" class="w-full p-4 border rounded-lg text-lg pr-12">
-        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
-          <svg id="eyeIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path id="eyeIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-          </svg>
+        <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
+
+        <input id="username" type="text" placeholder="Username or Email"
+               class="w-full p-4 border rounded-lg text-lg mb-4">
+
+        <div class="relative mb-6">
+            <input id="password" type="password" placeholder="Password"
+                   class="w-full p-4 border rounded-lg text-lg pr-12">
+
+            <button type="button" id="togglePassword"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+                <svg id="eyeIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path id="eyeIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+            </button>
+        </div>
+
+        <button id="signInButton"
+                class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+            Sign In
         </button>
-      </div>
-      <button id="signInButton" class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
-        Sign In
-      </button>
-      <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
+
+        <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
 
+    <!-- ==================== COMPANION ==================== -->
     <div id="companionContainer" class="hidden flex flex-col items-center mt-10">
-      <h2 class="text-3xl font-semibold mb-6">Your Companion</h2>
-      <!-- ADDED tabindex so it's focusable and testable -->
-      <div id="companionFace" tabindex="0" class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 transition transform">
-        <img id="faceImg" src="images/waiting_only.gif" alt="Companion" class="w-56 h-56">
-      </div>
-      <p class="mt-6 text-lg text-gray-700">Click or tap the face to talk!</p>
-      <button id="signOutButton" class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700">
-        Sign Out
-      </button>
+        <h2 class="text-3xl font-semibold mb-6">Your Companion</h2>
+
+        <div id="companionFace"
+             class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center
+                    cursor-pointer hover:scale-105 transition transform">
+            <img id="faceImg" src="images/waiting_only.gif" class="w-56 h-56">
+        </div>
+
+        <p class="mt-6 text-lg text-gray-700">Tap once to start talking — tap again to stop</p>
+
+        <button id="signOutButton"
+                class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700">
+            Sign Out
+        </button>
     </div>
-  </main>
 
-  <!-- Debug console -->
-  <div id="debugConsole" aria-live="polite" role="status" style="display:block;">
-    <header>
-      <span>Debug console</span>
-      <div>
-        <button id="dbgClear">Clear</button>
-        <button id="dbgHide">Hide</button>
-      </div>
-    </header>
-    <pre id="dbgOutput"></pre>
-  </div>
+</main>
 
-  <script>
-    // -------------------------
-    // Debug helpers (enhanced with JSON pretty-printing)
-    // -------------------------
-    const dbgDiv = document.getElementById('dbgOutput');
-    function dbg(...args) {
-      const text = args.map(a => {
-        if (typeof a === 'object') try { return JSON.stringify(a, null, 2); } catch { return String(a); }
-        return String(a);
-      }).join(' ');
-      console.log('[DBG]', text);
-      const now = new Date().toLocaleTimeString();
-      dbgDiv.textContent = (dbgDiv.textContent ? dbgDiv.textContent + '\n' : '') + `[${now}] ${text}`;
-      dbgDiv.scrollTop = dbgDiv.scrollHeight;
-      // keep last 3000 chars
-      if (dbgDiv.textContent.length > 30000) dbgDiv.textContent = dbgDiv.textContent.slice(-30000);
+<script>
+/* ==================== CONFIG ==================== */
+const COGNITO_CONFIG = {
+    UserPoolId: 'us-east-1_dnF4Uj5RY',
+    ClientId: '1eiq8thm150jeapi92ruvi58gk',
+    IdentityPoolId: 'us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580',
+    Region: 'us-east-1'
+};
+
+const pool = new AmazonCognitoIdentity.CognitoUserPool({
+    UserPoolId: COGNITO_CONFIG.UserPoolId,
+    ClientId: COGNITO_CONFIG.ClientId
+});
+
+/* ==================== ELEMENTS ==================== */
+const loginBox = document.getElementById("loginBox");
+const companionContainer = document.getElementById("companionContainer");
+const errorEl = document.getElementById("loginError");
+
+const faceImg = document.getElementById("faceImg");
+const waitingSrc = "images/waiting_only.gif";
+const talkingSrc = "images/talking_only.gif";
+
+let socket;
+let mediaStream;
+let recorder;
+let streaming = false;
+let sessionId = null;
+
+let userIsTalking = false;
+let modelIsTalking = false;
+
+function updateFace() {
+    faceImg.src = modelIsTalking ? talkingSrc : waitingSrc;
+}
+
+function setModelTalking(state) {
+    modelIsTalking = state;
+    updateFace();
+}
+
+/* ==================== LOGIN ==================== */
+document.getElementById("signInButton").addEventListener("click", () => {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!username || !password) {
+        showError("Please enter username and password");
+        return;
     }
-    document.getElementById('dbgClear').addEventListener('click', () => dbgDiv.textContent = '');
-    document.getElementById('dbgHide').addEventListener('click', () => {
-      const el = document.getElementById('debugConsole');
-      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    hideError();
+
+    const auth = new AmazonCognitoIdentity.AuthenticationDetails({
+        Username: username,
+        Password: password
     });
 
-    // -------------------------
-    // Existing app code (with even more debug logs)
-    // -------------------------
-    const COGNITO_CONFIG = {
-        UserPoolId: 'us-east-1_dnF4Uj5RY',
-        ClientId: '1eiq8thm150jeapi92ruvi58gk',
-        IdentityPoolId: 'us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580',
-        Region: 'us-east-1',
-    };
-    const WS_URL = "wss://7wkp0ewajd.execute-api.us-east-1.amazonaws.com/prod";
-
-    const pool = new AmazonCognitoIdentity.CognitoUserPool({
-      UserPoolId: COGNITO_CONFIG.UserPoolId,
-      ClientId: COGNITO_CONFIG.ClientId
+    const user = new AmazonCognitoIdentity.CognitoUser({
+        Username: username,
+        Pool: pool
     });
 
-    const loginBox = document.getElementById("loginBox");
-    const companionContainer = document.getElementById("companionContainer");
-    const errorEl = document.getElementById("loginError");
-    const faceImg = document.getElementById("faceImg");
-    const companionFace = document.getElementById("companionFace");
-    const waitingSrc = "images/waiting_only.gif";
-    const talkingSrc = "images/talking_only.gif";
-
-    let currentUser = null;
-    let socket = null;
-    let socketQueue = [];
-    let recorder = null;
-    let mediaStream = null;
-    let idToken = null;
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let playbackQueue = Promise.resolve();
-    let isRecording = false;
-
-    function showError(msg) { errorEl.textContent = msg; errorEl.classList.remove("hidden"); dbg('showError', msg); }
-    function hideError() { errorEl.classList.add("hidden"); dbg('hideError'); }
-
-    // password toggle (no change)
-    document.getElementById("togglePassword").addEventListener("click", function () {
-      dbg('togglePassword clicked');
-      const pwd = document.getElementById("password");
-      const iconPath = document.getElementById("eyeIconPath");
-      const hidden = pwd.type === "password";
-      pwd.type = hidden ? "text" : "password";
-      iconPath.setAttribute("d", hidden
-        ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 012.291-3.95M9.88 9.88A3 3 0 0114.12 14.12M3 3l18 18"
-        : "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z");
-    });
-
-    // sign in (added more debug)
-    document.getElementById("signInButton").addEventListener("click", () => {
-      hideError();
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
-      dbg('signIn clicked', {usernamePresent: !!username, passwordPresent: !!password});
-      if (!username || !password) return showError("Enter username and password");
-
-      const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({ Username: username, Password: password });
-      dbg('authDetails created', authDetails);
-      const cognitoUser = new AmazonCognitoIdentity.CognitoUser({ Username: username, Pool: pool });
-      dbg('cognitoUser created', cognitoUser.username);
-
-      cognitoUser.authenticateUser(authDetails, {
+    user.authenticateUser(auth, {
         onSuccess: result => {
-          dbg('cognito onSuccess', {accessToken: result.getAccessToken().getJwtToken().substring(0, 20) + '...'});
-          currentUser = username;
-          idToken = result.getIdToken().getJwtToken();
-          loginBox.classList.add("hidden");
-          companionContainer.classList.remove("hidden");
-          connectWebSocket();
+            const idToken = result.getIdToken().getJwtToken();
+            setupAWSCreds(idToken);
         },
-        onFailure: err => { dbg('cognito onFailure', err); showError(err.message || "Login failed"); }
-      });
+        onFailure: err => showError(err.message || "Login failed"),
+        newPasswordRequired: () =>
+            showError("New password required – not supported here")
+    });
+});
+
+function setupAWSCreds(idToken) {
+    AWS.config.region = COGNITO_CONFIG.Region;
+
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+        IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
+        Logins: {
+            [`cognito-idp.${COGNITO_CONFIG.Region}.amazonaws.com/${COGNITO_CONFIG.UserPoolId}`]:
+                idToken
+        }
     });
 
-    // --- STATUS LOGGER (more details) ---
-    function logStatus(tag) {
-      console.log(tag, {
-        audioState: audioCtx.state,
-        socketState: socket ? socket.readyState : "no-socket",
-        isRecording,
-        hasMedia: !!mediaStream,
-        currentUser
-      });
-    }
+    AWS.config.credentials.get(err => {
+        if (err) return showError("AWS credential error");
 
-    // --- WEBSOCKET CONNECTION (more debug) ---
-    function connectWebSocket() {
-      dbg('connectWebSocket start', { idTokenPresent: !!idToken });
+        loginBox.classList.add("hidden");
+        companionContainer.classList.remove("hidden");
+        connectWebSocket();
+    });
+}
 
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        dbg('connectWebSocket - already open, skipping');
-        return;
-      }
+/* ==================== WEBSOCKET ==================== */
+async function connectWebSocket() {
+    if (socket && socket.readyState === WebSocket.OPEN) return;
 
-      const urlWithToken = `${WS_URL}?token=${encodeURIComponent(idToken)}`;
-      dbg('connectWebSocket URL', urlWithToken.replace(/token=.*/, "token=<masked>"));
+    socket = new WebSocket("wss://xkl5ptgrai.execute-api.us-east-1.amazonaws.com/prod");
+    socket.binaryType = "arraybuffer";
 
-      socket = new WebSocket(urlWithToken);
-      socket.binaryType = "arraybuffer";
+    socket.onopen = () => console.log("WS OPEN");
 
-      socket.onopen = () => {
-        dbg('WebSocket OPEN');
-        hideError();
-        // Send auth or start
-        socket.send(JSON.stringify({ type: "auth" }));
-      };
+    socket.onmessage = async evt => {
+        if (typeof evt.data === "string") {
+            const msg = JSON.parse(evt.data);
 
-      socket.onmessage = (e) => {
-        dbg('WS onmessage', {type: typeof e.data, size: e.data.size || e.data.length});
-        if (typeof e.data === "string") {
-          const msg = JSON.parse(e.data);
-          dbg('WS JSON msg', msg);
-          if (msg.type === "audio_response") {
-            dbg('WS audio_response - decoding...');
-            const binary = atob(msg.data);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            playAudio(bytes.buffer);
-          }
-          if (msg.type === "speech_start") faceImg.src = talkingSrc;
-          if (msg.type === "speech_end") faceImg.src = waitingSrc;
-        } else {
-          dbg('WS binary audio - playing...');
-          playAudio(e.data);
+            if (msg.type === "session") sessionId = msg.sessionId;
+            if (msg.type === "speech_start") setModelTalking(true);
+            if (msg.type === "speech_end") setModelTalking(false);
+
+            return;
         }
-      };
 
-      socket.onclose = e => dbg('WS onclose', {code: e.code, reason: e.reason, wasClean: e.wasClean});
-      socket.onerror = e => dbg('WS onerror', e);
-    }
+        // Audio chunk
+        const buf = await audioCtx.decodeAudioData(evt.data.slice(0));
+        playBuffer(buf);
+    };
 
-    // --- MICROPHONE ACCESS (more debug) ---
-    async function requestMic() {
-      dbg('requestMic start');
-      try {
+    socket.onclose = () => console.log("WS CLOSED");
+    socket.onerror = e => console.error("WS ERROR", e);
+}
+
+/* ==================== AUDIO ==================== */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let playbackQueue = Promise.resolve();
+
+function playBuffer(buffer) {
+    playbackQueue = playbackQueue.then(
+        () =>
+            new Promise(res => {
+                const src = audioCtx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(audioCtx.destination);
+                src.onended = res;
+                src.start();
+            })
+    );
+}
+
+/* ==================== STREAMING ==================== */
+async function startStreaming() {
+    await connectWebSocket();
+
+    if (!mediaStream) {
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        dbg('requestMic success', {tracks: mediaStream.getTracks().length});
-        return true;
-      } catch (err) {
-        dbg('requestMic error', err);
-        showError("Microphone access denied.");
-        return false;
-      }
     }
 
-    // --- CLICK HANDLER (more debug) ---
-    async function toggleTalking() {
-      dbg('toggleTalking start', { isRecording });
+    recorder = new MediaRecorder(mediaStream, { mimeType: "audio/webm;codecs=opus" });
 
-      if (isRecording) {
-        dbg('toggleTalking - stopping');
-        recorder.stop();
-        isRecording = false;
-        faceImg.src = waitingSrc;
-        socket.send(JSON.stringify({ type: "end_of_utterance" }));
-        return;
-      }
-
-      dbg('toggleTalking - starting');
-      if (!mediaStream) {
-        if (!await requestMic()) return;
-      }
-
-      recorder = new MediaRecorder(mediaStream, { mimeType: "audio/webm;codecs=opus" });
-      dbg('toggleTalking - recorder created', {state: recorder.state});
-
-      recorder.ondataavailable = async e => {
-        dbg('recorder ondataavailable', {size: e.data.size});
+    recorder.ondataavailable = e => {
         if (e.data.size > 0 && socket.readyState === WebSocket.OPEN) {
-          const arrayBuffer = await e.data.arrayBuffer();
-          const uint8 = new Uint8Array(arrayBuffer);
-          let binary = '';
-          uint8.forEach(b => binary += String.fromCharCode(b));
-          const base64Audio = btoa(binary);
-          dbg('sending audio_chunk', {length: base64Audio.length});
-          socket.send(JSON.stringify({ type: "audio_chunk", data: base64Audio }));
+            socket.send(JSON.stringify({ type: "audio_chunk", sessionId }));
+            socket.send(e.data);
         }
-      };
+    };
 
-      recorder.start(200);
-      isRecording = true;
-      faceImg.src = talkingSrc;
-      socket.send(JSON.stringify({ type: "start_session", user: currentUser || "guest" }));
-      dbg('toggleTalking - started', {state: recorder.state});
-    }
+    socket.send(JSON.stringify({
+        type: "start_session",
+        user: "user"
+    }));
 
-    // Attach many event listeners to debug click/tap
-    function attachFaceDebugListeners(el) {
-      const evs = ['pointerdown','pointerup','pointercancel','pointerleave','mousedown','mouseup','click','touchstart','touchend','touchcancel','focus','blur','keydown','keyup'];
-      for (const ev of evs) {
-        el.addEventListener(ev, (e) => {
-          dbg('face event', ev, {
-            type: e.type,
-            pointerType: e.pointerType || (e.touches ? 'touch' : 'mouse'),
-            altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey,
-            timestamp: e.timeStamp
-          });
-          if (ev === 'pointerdown' || ev === 'mousedown' || ev === 'touchstart') el.classList.add('debug-highlight');
-          if (ev === 'pointerup' || ev === 'mouseup' || ev === 'touchend') setTimeout(() => el.classList.remove('debug-highlight'), 200);
-        }, {passive: false});
-      }
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          dbg('face key activation', e.key);
-          e.preventDefault();
-          toggleTalking();
-        }
-      });
-    }
+    recorder.start(200);
+    streaming = true;
+}
 
-    attachFaceDebugListeners(companionFace);
+function stopStreaming() {
+    if (recorder && recorder.state === "recording") recorder.stop();
 
-    // Original click/touch handlers
-    companionFace.addEventListener('click', (e) => {
-      dbg('companionFace click', {button: e.button});
-      toggleTalking();
-    });
+    socket?.send(JSON.stringify({ type: "end_session", sessionId }));
 
-    companionFace.addEventListener('touchend', (e) => {
-      dbg('companionFace touchend', {touches: e.touches.length});
-      e.preventDefault();
-      toggleTalking();
-    }, {passive: false});
+    streaming = false;
+}
 
-    // sign out
-    document.getElementById("signOutButton").addEventListener("click", () => {
-      dbg('signOut clicked');
-      if (pool.getCurrentUser()) pool.getCurrentUser().signOut();
-      location.reload();
-    });
+/* ==================== USER INTERACTION ==================== */
+document.getElementById("companionFace").addEventListener("click", async () => {
+    if (!streaming) await startStreaming();
+    else stopStreaming();
+});
 
-    // cleanup
-    window.addEventListener('beforeunload', () => {
-      dbg('beforeunload cleanup');
-      if (socket) socket.close();
-    });
+/* ==================== UTILS ==================== */
+function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.classList.remove("hidden");
+}
+function hideError() {
+    errorEl.classList.add("hidden");
+}
 
-    // Quick status
-    setInterval(() => {
-      dbg('status', {
-        audioState: audioCtx.state,
-        socketState: socket ? socket.readyState : 'no-socket',
-        isRecording,
-        hasMedia: !!mediaStream,
-        currentUser
-      });
-    }, 8000);
-  </script>
+/* ==================== SIGN OUT ==================== */
+document.getElementById("signOutButton").addEventListener("click", () => {
+    pool.getCurrentUser()?.signOut();
+    location.reload();
+});
+</script>
 </body>
 </html>
+
