@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GRF - Happy Chat (100% SDK v3)</title>
+    <title>GRF - Happy Chat</title>
     <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
 <body class="bg-gray-100 font-sans">
-<!-- Your header/nav same as before -->
+
 <header class="relative bg-cover bg-center h-64 flex items-center justify-center"
         style="background-image: url('images/banner.jpg')">
     <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
@@ -27,177 +26,183 @@
         <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
         <input id="username" type="email" placeholder="Email" class="w-full p-4 border rounded-lg text-lg mb-4">
         <input id="password" type="password" placeholder="Password" class="w-full p-4 border rounded-lg text-lg mb-4">
-        <button id="signInButton" class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl">Sign In</button>
+        <button id="signInButton" class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700">Sign In</button>
         <p id="loginError" class="text-red-600 mt-4 hidden"></p>
     </div>
 
     <div id="companionContainer" class="hidden flex flex-col items-center mt-10">
-        <h2 class="text-3xl font-semibold mb-6">Your Companion</h2>
+        <h2 class="text-3xl font-semibold mb-6">Your Happy Companion</h2>
         <div id="companionFace" class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 transition">
             <img id="faceImg" src="images/waiting_only.gif" class="w-56 h-56">
         </div>
-        <p class="mt-6 text-lg">Click to talk</p>
+        <p class="mt-6 text-lg">Click the face and speak!</p>
         <button id="signOutButton" class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg">Sign Out</button>
     </div>
 </main>
 
 <script type="module">
-import { CognitoIdentityProviderClient, InitiateAuthCommand } from "https://cdn.skypack.dev/@aws-sdk/client-cognito-identity-provider";
-import { fromCognitoIdentityPool } from "https://cdn.skypack.dev/@aws-sdk/credential-provider-cognito-identity";
-import { BedrockRuntimeClient, InvokeModelWithBidirectionalStreamCommand } from "https://cdn.skypack.dev/@aws-sdk/client-bedrock-runtime";
+    // === AWS SDK v3 from jsDelivr (this version never breaks) ===
+    import { CognitoIdentityProviderClient, InitiateAuthCommand } from "https://cdn.jsdelivr.net/npm/@aws-sdk/client-cognito-identity-provider@3/dist-es/index.js";
+    import { fromCognitoIdentityPool } from "https://cdn.jsdelivr.net/npm/@aws-sdk/credential-provider-cognito-identity@3/dist-es/fromCognitoIdentityPool.js";
+    import { BedrockRuntimeClient, InvokeModelWithBidirectionalStreamCommand } from "https://cdn.jsdelivr.net/npm/@aws-sdk/client-bedrock-runtime@3/dist-es/index.js";
 
-const CONFIG = {
-    region: "us-east-1",
-    userPoolId: "us-east-1_dnF4Uj5RY",
-    clientId: "1eiq8thm150jeapi92ruvi58gk",
-    identityPoolId: "us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580"
-};
+    const CONFIG = {
+        region: "us-east-1",
+        userPoolId: "us-east-1_dnF4Uj5RY",
+        clientId: "1eiq8thm150jeapi92ruvi58gk",
+        identityPoolId: "us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580"
+    };
 
-const MODEL_ID = "amazon.nova-2-sonic-v1:0";
-const SYSTEM_PROMPT = "You are a cheerful cloud expert. Keep answers fun and short.";
+    const MODEL_ID = "amazon.nova-2-sonic-v1:0";
+    const SYSTEM_PROMPT = "You are a super cheerful cloud expert. Answer in a fun, short, happy way!";
 
-let bedrockClient;
-let isStreaming = false;
-let mediaRecorder;
-let audioChunks = [];
+    let bedrockClient = null;
+    let isStreaming = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
 
-document.getElementById("signInButton").onclick = async () => {
-    const email = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+    document.getElementById("signInButton").onclick = async () => {
+        const email = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
 
-    if (!email || !password) return showError("Fill in email and password");
-
-    try {
-        const client = new CognitoIdentityProviderClient({ region: CONFIG.region });
-        const command = new InitiateAuthCommand({
-            AuthFlow: "USER_PASSWORD_AUTH",
-            ClientId: CONFIG.clientId,
-            AuthParameters: { USERNAME: email, PASSWORD: password }
-        });
-
-        const response = await client.send(command);
-        const idToken = response.AuthenticationResult.IdToken;
-
-        // Get temporary AWS credentials
-        const credentials = fromCognitoIdentityPool({
-            clientConfig: { region: CONFIG.region },
-            identityPoolId: CONFIG.identityPoolId,
-            logins: { [`cognito-idp.${CONFIG.region}.amazonaws.com/${CONFIG.userPoolId}`]: idToken }
-        });
-
-        bedrockClient = new BedrockRuntimeClient({
-            region: CONFIG.region,
-            credentials
-        });
-
-        document.getElementById("loginBox").classList.add("hidden");
-        document.getElementById("companionContainer").classList.remove("hidden");
-        console.log("Logged in + Bedrock ready");
-    } catch (err) {
-        showError(err.message || "Login failed");
-    }
-};
-
-document.getElementById("companionFace").onclick = () => {
-    if (!bedrockClient) return showError("Log in first");
-    if (isStreaming) return stopRecording();
-    startRecordingAndStream();
-};
-
-async function startRecordingAndStream() {
-    isStreaming = true;
-    audioChunks = [];
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 16000, channelCount: 1 }
-    });
-
-    mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/wav" });
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-    mediaRecorder.start();
-
-    setTimeout(() => mediaRecorder.state === "recording" && mediaRecorder.stop(), 8000);
-
-    mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-        const base64 = await blobToBase64(audioBlob);
-
-        const events = [
-            JSON.stringify({ event: { sessionStart: { inferenceConfiguration: { temperature: 0.7 } } } }),
-            JSON.stringify({ event: { promptStart: { promptName: "user", audioOutput: { enabled: true } } } }),
-            JSON.stringify({ event: { contentStart: { role: "system" } } }),
-            JSON.stringify({ event: { content: [{ text: SYSTEM_PROMPT }] } }),
-            JSON.stringify({ event: { contentEnd: {} } }),
-            JSON.stringify({ event: { contentStart: { role: "user" } } }),
-            JSON.stringify({ event: { content: [{ audioInput: { data: base64.split(',')[1], encoding: "base64", sampleRate: 16000 } }] } }),
-            JSON.stringify({ event: { contentEnd: {} } }),
-            JSON.stringify({ event: { promptEnd: {} } }),
-            JSON.stringify({ event: { sessionEnd: {} } })
-        ].join("\n");
+        if (!email || !password) return showError("Enter email and password");
 
         try {
-            const command = new InvokeModelWithBidirectionalStreamCommand({
-                modelId: MODEL_ID,
-                contentType: "application/jsonlines",
-                accept: "application/jsonlines",
-                body: events
+            const cognitoClient = new CognitoIdentityProviderClient({ region: CONFIG.region });
+            const authCommand = new InitiateAuthCommand({
+                AuthFlow: "USER_PASSWORD_AUTH",
+                ClientId: CONFIG.clientId,
+                AuthParameters: { USERNAME: email, PASSWORD: password }
             });
 
-            const response = await bedrockClient.send(command);
-            let audioBase64 = "";
+            const authResult = await cognitoClient.send(authCommand);
+            const idToken = authResult.AuthenticationResult.IdToken;
 
-            for await (const chunk of response.body) {
-                const text = new TextDecoder().decode(chunk.chunk.bytes);
-                for (const line of text.split("\n").filter(Boolean)) {
-                    try {
-                        const json = JSON.parse(line);
-                        if (json.event?.response?.audioOutput?.data) {
-                            audioBase64 += json.event.response.audioOutput.data;
-                        }
-                    } catch {}
-                }
-            }
+            const credentials = fromCognitoIdentityPool({
+                clientConfig: { region: CONFIG.region },
+                identityPoolId: CONFIG.identityPoolId,
+                logins: { [`cognito-idp.${CONFIG.region}.amazonaws.com/${CONFIG.userPoolId}`]: idToken }
+            });
 
-            if (audioBase64) {
-                const audio = new Audio(URL.createObjectURL(base64ToBlob(audioBase64)));
-                audio.play();
-            }
+            bedrockClient = new BedrockRuntimeClient({
+                region: CONFIG.region,
+                credentials
+            });
+
+            document.getElementById("loginBox").classList.add("hidden");
+            document.getElementById("companionContainer").classList.remove("hidden");
+            console.log("Logged in – Nova 2 Sonic ready!");
         } catch (err) {
+            showError(err.message || "Login failed");
             console.error(err);
-            showError("Nova error: " + err.message);
-        } finally {
-            stream.getTracks().forEach(t => t.stop());
-            isStreaming = false;
         }
     };
-}
 
-function stopRecording() {
-    if (mediaRecorder?.state === "recording") mediaRecorder.stop();
-    isStreaming = false;
-}
+    document.getElementById("companionFace").onclick = () => {
+        if (!bedrockClient) return showError("Log in first");
+        if (isStreaming) return stopRecording();
+        startTalking();
+    };
 
-function blobToBase64(blob) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-    });
-}
+    async function startTalking() {
+        isStreaming = true;
+        audioChunks = [];
 
-function base64ToBlob(base64) {
-    const binary = atob(base64);
-    const array = Uint8Array.from(binary, c => c.charCodeAt(0));
-    return new Blob([array], { type: "audio/wav" });
-}
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true }
+            });
 
-function showError(msg) {
-    const el = document.getElementById("loginError");
-    el.textContent = msg;
-    el.classList.remove("hidden");
-}
+            mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/wav" });
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.start();
 
-document.getElementById("signOutButton").onclick = () => location.reload();
+            // Auto-stop after 8 seconds (or click again to stop early)
+            setTimeout(() => {
+                if (mediaRecorder?.state === "recording") mediaRecorder.stop();
+            }, 8000);
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+                const base64Audio = await blobToBase64(audioBlob);
+
+                const events = [
+                    `{ "event": { "sessionStart": { "inferenceConfiguration": { "temperature": 0.7 } } } }`,
+                    `{ "event": { "promptStart": { "promptName": "user", "audioOutput": { "enabled": true, "sampleRate": 24000, "format": "pcm" } } } }`,
+                    `{ "event": { "contentStart": { "role": "system" } } }`,
+                    `{ "event": { "content": [{ "text": "${SYSTEM_PROMPT}" }] } }`,
+                    `{ "event": { "contentEnd": {} } }`,
+                    `{ "event": { "contentStart": { "role": "user" } } }`,
+                    `{ "event": { "content": [{ "audioInput": { "data": "${base64Audio.split(',')[1]}", "encoding": "base64", "sampleRate": 16000 } }] } }`,
+                    `{ "event": { "contentEnd": {} } }`,
+                    `{ "event": { "promptEnd": {} } }`,
+                    `{ "event": { "sessionEnd": {} } }`
+                ].join("\n");
+
+                const command = new InvokeModelWithBidirectionalStreamCommand({
+                    modelId: MODEL_ID,
+                    contentType: "application/jsonlines",
+                    accept: "application/jsonlines",
+                    body: events
+                });
+
+                const response = await bedrockClient.send(command);
+
+                let fullAudio = "";
+                for await (const chunk of response.body) {
+                    const text = new TextDecoder().decode(chunk.chunk?.bytes);
+                    for (const line of text.split("\n").filter(Boolean)) {
+                        try {
+                            const json = JSON.parse(line);
+                            if (json.event?.response?.audioOutput?.data) {
+                                fullAudio += json.event.response.audioOutput.data;
+                            }
+                        } catch {}
+                    }
+                }
+
+                if (fullAudio) {
+                    const audio = new Audio(URL.createObjectURL(base64ToBlob(fullAudio)));
+                    audio.play();
+                }
+
+                stream.getTracks().forEach(t => t.stop());
+                isStreaming = false;
+            };
+
+        } catch (err) {
+            console.error(err);
+            showError("Mic or Nova error");
+            isStreaming = false;
+        }
+    }
+
+    function stopRecording() {
+        if (mediaRecorder?.state === "recording") mediaRecorder.stop();
+        isStreaming = false;
+    }
+
+    function blobToBase64(blob) {
+        return new Promise((res) => {
+            const reader = new FileReader();
+            reader.onloadend = () => res(reader.result);
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    function base64ToBlob(b64) {
+        const binary = atob(b64);
+        const array = Uint8Array.from(binary, c => c.charCodeAt(0));
+        return new Blob([array], { type: "audio/wav" });
+    }
+
+    function showError(msg) {
+        const el = document.getElementById("loginError");
+        el.textContent = msg;
+        el.classList.remove("hidden");
+    }
+
+    document.getElementById("signOutButton").onclick = () => location.reload();
 </script>
 </body>
 </html>
