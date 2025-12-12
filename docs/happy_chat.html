@@ -6,12 +6,15 @@
     <title>GRF - Happy Chat</title>
     <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@elevenlabs/convai-widget@latest/dist/browser/convai-widget.js" async></script>
+
+    <!-- NEW EMBED SCRIPT (this is the one that actually shows the mic/button) -->
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 </head>
 <body class="bg-gray-100 font-sans">
 <header class="relative bg-cover bg-center h-64 flex items-center justify-center" style="background-image: url('images/banner.jpg')">
     <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
 </header>
+
 <nav class="bg-blue-600 text-white p-4">
     <ul class="flex justify-center space-x-8">
         <li><a href="index.html" class="hover:underline">Home</a></li>
@@ -20,8 +23,10 @@
         <li><a href="database.html" class="hover:underline">Database</a></li>
     </ul>
 </nav>
-<main class="max-w-3xl mx-auto my-10 p-6 text-center">
-    <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
+
+<main class="max-w-5xl mx-auto my-10 px-6">
+    <!-- LOGIN BOX -->
+    <div id="loginBox" class="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-10 text-center">
         <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
         <input id="username" type="email" placeholder="Email" class="w-full p-4 border rounded-lg text-lg mb-4" />
         <div class="relative mb-6">
@@ -32,41 +37,69 @@
                 </svg>
             </button>
         </div>
-        <button id="signInButton" class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700">Sign In</button>
+        <button id="signInButton" class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+            Sign In
+        </button>
         <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
-    <div id="companionContainer" class="hidden flex flex-col items-center mt-10 space-y-6">
-        <img id="sceneImage" src="images/heartwarming_scene.jpg" class="w-96 rounded-xl shadow-lg" />
+
+    <!-- COMPANION AREA (shown after login) -->
+    <div id="companionContainer" class="hidden flex flex-col items-center mt-16 space-y-10">
+        <!-- Bigger heartwarming image -->
+        <img id="sceneImage"
+             src="images/heartwarming_scene.jpg"
+             alt="Heartwarming scene"
+             class="w-full max-w-2xl rounded-2xl shadow-2xl" />
+
+        <!-- NEW WIDGET WITH YOUR AGENT ID -->
         <elevenlabs-convai
-            agent-id="agent_04014kazvgw3fq8tr5hlamp02e5m"
-            class="w-full"
-        ></elevenlabs-convai>
+            agent-id="agent_7001kc96ge93fwtrmpw4vt2qe70c"
+            class="w-full max-w-2xl">
+        </elevenlabs-convai>
     </div>
 </main>
+
 <script>
-function showError(msg){const el=document.getElementById("loginError");el.textContent=msg;el.classList.remove("hidden");}
-document.getElementById("signInButton").onclick=()=>{
- const email=document.getElementById("username").value.trim();
- const pass=document.getElementById("password").value;
- if(!email||!pass)return showError("Please fill in email and password");
- document.getElementById("loginBox").classList.add("hidden");
- document.getElementById("companionContainer").classList.remove("hidden");
+function showError(msg) {
+    const el = document.getElementById("loginError");
+    el.textContent = msg;
+    el.classList.remove("hidden");
+}
+
+// Fake login – just hides login box and shows companion
+document.getElementById("signInButton").onclick = () => {
+    const email = document.getElementById("username").value.trim();
+    const pass = document.getElementById("password").value;
+
+    if (!email || !pass) return showError("Please fill in email and password");
+
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("companionContainer").classList.remove("hidden");
 };
-document.getElementById("togglePassword").onclick=()=>{
- const p=document.getElementById("password");p.type=p.type==="password"?"text":"password";
+
+// Toggle password visibility
+document.getElementById("togglePassword").onclick = () => {
+    const p = document.getElementById("password");
+    p.type = p.type === "password" ? "text" : "password";
 };
-window.addEventListener("message",(e)=>{
- if(e.data?.event==="agent_call_started"){
-   document.getElementById("sceneImage").src="images/old_grandma.png";
- }
- if(e.data?.event==="agent_call_ended"){
-   location.reload();
- }
+
+// Listen for call events to swap image (optional fun feature you already had)
+window.addEventListener("message", (e) => {
+    if (e.data?.event === "agent_call_started") {
+        document.getElementById("sceneImage").src = "images/old_grandma.png";
+    }
+    if (e.data?.event === "agent_call_ended") {
+        location.reload(); // or just reset image if you prefer
+    }
 });
 </script>
-  <style>
-    #heroImg { width: 100%; height: calc(100vh - 120px); object-fit: cover; border-radius: 16px; }
-    #widgetBox { margin-top: 2rem; }
-  </style>
+
+<style>
+    /* Optional: make the widget look nicer */
+    elevenlabs-convai::part(button) {
+        background: #2563eb !important;
+        border-radius: 9999px !important;
+    }
+</style>
 </body>
 </html>
