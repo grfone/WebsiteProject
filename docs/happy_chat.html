@@ -1,18 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GRF - Happy Chat</title>
-    <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
+    <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Single AWS SDK v3 bundle hosted by AWS (guaranteed to work) -->
     <script src="https://assets.bedrock.aws.amazon.com/sdk/v3/aws-sdk.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans">
 
-<header class="relative bg-cover bg-center h-64 flex items-center justify-center"
-        style="background-image: url('images/banner.jpg')">
+<header class="relative bg-cover bg-center h-64 flex items-center justify-center" style="background-image: url('images/banner.jpg')">
     <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
 </header>
 
@@ -26,17 +24,15 @@
 </nav>
 
 <main class="max-w-3xl mx-auto my-10 p-6 text-center">
-
     <!-- Login -->
     <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
         <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
-        <input id="username" type="email" placeholder="Email" class="w-full p-4 border rounded-lg text-lg mb-4">
+        <input id="username" type="email" placeholder="Email" class="w-full p-4 border rounded-lg text-lg mb-4" />
         <div class="relative mb-6">
-            <input id="password" type="password" placeholder="Password" class="w-full p-4 border rounded-lg text-lg pr-12">
+            <input id="password" type="password" placeholder="Password" class="w-full p-4 border rounded-lg text-lg pr-12" />
             <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
             </button>
         </div>
@@ -44,46 +40,26 @@
         <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
 
-    <!-- Companion -->
-    <div id="companionContainer" class="hidden flex flex-col items-center mt-10">
-        <h2 class="text-3xl font-semibold mb-6">Your Happy Companion</h2>
-        <div id="companionFace" class="w-64 h-64 bg-yellow-200 rounded-full shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 transition">
-            <img id="faceImg" src="images/waiting_only.gif" class="w-56 h-56">
-        </div>
-        <p class="mt-6 text-lg text-gray-700">Click the face and speak! (up to 8 seconds)</p>
-        <button id="signOutButton" class="mt-8 bg-gray-600 text-white px-8 py-3 rounded-lg hover:bg-gray-700">Sign Out</button>
+    <!-- Scene + Widget -->
+    <div id="companionContainer" class="hidden flex flex-col items-center mt-10 space-y-6">
+        <img id="sceneImage" src="images/heartwarming_scene.png" class="w-96 rounded-xl shadow-lg" />
+
+        <iframe
+            id="elevenWidget"
+            src="https://elevenlabs.io/app/talk-to?agent_id=agent_7001kc96ge93fwtrmpw4vt2qe70c&branch_id=agtbrch_1501kc96gfynestacfnzsc2m9gzh"
+            class="w-full h-[600px] rounded-xl shadow-xl border"
+        ></iframe>
     </div>
 </main>
 
 <script>
-    const {
-        CognitoIdentityProviderClient, InitiateAuthCommand,
-        fromCognitoIdentityPool,
-        BedrockRuntimeClient, InvokeModelWithBidirectionalStreamCommand
-    } = AWS;
+    const { CognitoIdentityProviderClient, InitiateAuthCommand } = AWS;
 
     const CONFIG = {
         region: "us-east-1",
         userPoolId: "us-east-1_dnF4Uj5RY",
         clientId: "1eiq8thm150jeapi92ruvi58gk",
-        identityPoolId: "us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580"
     };
-
-    const MODEL_ID = "amazon.nova-2-sonic-v1:0";
-    const SYSTEM_PROMPT = "You are a super happy companion who loves clouds and weather. Answer in a fun, cheerful way!";
-
-    let bedrockClient = null;
-    let isStreaming = false;
-    let mediaRecorder = null;
-    let audioChunks = [];
-
-    const faceImg = document.getElementById("faceImg");
-    const waitingSrc = "images/waiting_only.gif";
-    const talkingSrc = "images/talking_only.gif";
-
-    function updateFace(talking) {
-        faceImg.src = talking ? talkingSrc : waitingSrc;
-    }
 
     function showError(msg) {
         const el = document.getElementById("loginError");
@@ -102,143 +78,34 @@
             const command = new InitiateAuthCommand({
                 AuthFlow: "USER_PASSWORD_AUTH",
                 ClientId: CONFIG.clientId,
-                AuthParameters: { USERNAME: email, PASSWORD: password }
-            });
-            const result = await cognitoClient.send(command);
-            const idToken = result.AuthenticationResult.IdToken;
-
-            const credentials = fromCognitoIdentityPool({
-                clientConfig: { region: CONFIG.region },
-                identityPoolId: CONFIG.identityPoolId,
-                logins: { [`cognito-idp.${CONFIG.region}.amazonaws.com/${CONFIG.userPoolId}`]: idToken }
+                AuthParameters: { USERNAME: email, PASSWORD: password },
             });
 
-            bedrockClient = new BedrockRuntimeClient({ region: CONFIG.region, credentials });
-            console.log("Login successful! Ready to chat.");
+            await cognitoClient.send(command);
 
             document.getElementById("loginBox").classList.add("hidden");
             document.getElementById("companionContainer").classList.remove("hidden");
         } catch (err) {
             showError(err.message || "Login failed");
-            console.error(err);
         }
     };
-
-    // Click face to talk
-    document.getElementById("companionFace").onclick = () => {
-        if (!bedrockClient) return showError("Please log in first");
-        if (isStreaming) stopTalking();
-        else startTalking();
-    };
-
-    async function startTalking() {
-        isStreaming = true;
-        updateFace(false);
-        audioChunks = [];
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true }
-            });
-            mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/wav" });
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-            mediaRecorder.start();
-
-            setTimeout(() => {
-                if (mediaRecorder?.state === "recording") mediaRecorder.stop();
-            }, 8000); // max 8 seconds
-
-            mediaRecorder.onstop = () => sendToNova(stream);
-        } catch (err) {
-            showError("Microphone access denied");
-            isStreaming = false;
-        }
-    }
-
-    function stopTalking() {
-        if (mediaRecorder?.state === "recording") mediaRecorder.stop();
-        isStreaming = false;
-    }
-
-    async function sendToNova(stream) {
-        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-        const base64 = await new Promise(r => {
-            const reader = new FileReader();
-            reader.onload = () => r(reader.result.split(',')[1]);
-            reader.readAsDataURL(audioBlob);
-        });
-
-        const events = [
-            JSON.stringify({ event: { sessionStart: { inferenceConfiguration: { temperature: 0.7 } } } }),
-            JSON.stringify({ event: { promptStart: { promptName: "user", audioOutput: { enabled: true, sampleRate: 24000, format: "pcm" } } } }),
-            JSON.stringify({ event: { contentStart: { role: "system" } } }),
-            JSON.stringify({ event: { content: [{ text: SYSTEM_PROMPT }] } }),
-            JSON.stringify({ event: { contentEnd: {} } }),
-            JSON.stringify({ event: { contentStart: { role: "user" } } }),
-            JSON.stringify({ event: { content: [{ audioInput: { data: base64, encoding: "base64", sampleRate: 16000 } }] } }),
-            JSON.stringify({ event: { contentEnd: {} } }),
-            JSON.stringify({ event: { promptEnd: {} } }),
-            JSON.stringify({ event: { sessionEnd: {} } })
-        ].join("\n");
-
-        try {
-            const command = new InvokeModelWithBidirectionalStreamCommand({
-                modelId: MODEL_ID,
-                contentType: "application/jsonlines",
-                accept: "application/jsonlines",
-                body: events
-            });
-
-            const response = await bedrockClient.send(command);
-            let fullAudio = "";
-
-            for await (const chunk of response.body) {
-                const text = new TextDecoder().decode(chunk.chunk?.bytes);
-                for (const line of text.split("\n").filter(Boolean)) {
-                    try {
-                        const json = JSON.parse(line);
-                        if (json.event?.response?.audioOutput?.data) {
-                            fullAudio += json.event.response.audioOutput.data;
-                            updateFace(true);
-                        }
-                    } catch {}
-                }
-            }
-
-            if (fullAudio) {
-                const audioBlob = base64ToWav(fullAudio);
-                const url = URL.createObjectURL(audioBlob);
-                const audio = new Audio(url);
-                audio.play();
-                audio.onended = () => {
-                    updateFace(false);
-                    URL.revokeObjectURL(url);
-                };
-            }
-        } catch (err) {
-            console.error(err);
-            showError("Nova error: " + err.message);
-            updateFace(false);
-        } finally {
-            stream.getTracks().forEach(t => t.stop());
-            isStreaming = false;
-        }
-    }
-
-    function base64ToWav(base64) {
-        const binary = atob(base64);
-        const array = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
-        return new Blob([array], { type: "audio/wav" });
-    }
-
-    // Sign out
-    document.getElementById("signOutButton").onclick = () => location.reload();
 
     // Password toggle
     document.getElementById("togglePassword")?.addEventListener("click", () => {
         const pass = document.getElementById("password");
         pass.type = pass.type === "password" ? "text" : "password";
+    });
+
+    // Widget event handling
+    document.getElementById("elevenWidget").addEventListener("load", () => {
+        window.addEventListener("message", (e) => {
+            if (e.data?.event === "agent_call_started") {
+                document.getElementById("sceneImage").src = "images/old_grandma.png";
+            }
+            if (e.data?.event === "agent_call_ended") {
+                location.reload();
+            }
+        });
     });
 </script>
 </body>
