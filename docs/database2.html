@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRF - Database</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Cognito Identity SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
+
+    <!-- AWS SDK v2 (still works for DynamoDB) -->
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+    <header class="relative bg-cover bg-center h-64 flex items-center justify-center"
+            style="background-image: url('images/banner.jpg')">
+        <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
+    </header>
+
+    <nav class="bg-blue-600 text-white p-4">
+        <ul class="flex justify-center space-x-8">
+            <li><a href="index.html" class="hover:underline">Home</a></li>
+            <li><a href="types_of_clouds.html" class="hover:underline">Types of Clouds</a></li>
+            <li><a href="happy_chat.html" class="hover:underline">Happy Chat</a></li>
+            <li><a href="database.html" class="hover:underline font-bold">Database</a></li>
+        </ul>
+    </nav>
+
+    <main class="max-w-3xl mx-auto my-10 p-6 text-center">
+
+        <!-- Login -->
+        <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
+            <h2 class="text-3xl font-semibold mb-8">Database Login</h2>
+
+            <input id="username" type="text" placeholder="Username or Email"
+                   class="w-full p-4 border rounded-lg text-lg mb-4">
+
+            <div class="relative mb-6">
+                <input id="password" type="password" placeholder="Password"
+                       class="w-full p-4 border rounded-lg text-lg pr-12">
+                <button type="button" id="togglePassword"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+                    <svg id="eyeIcon" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path id="eyeIconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <button id="signInButton"
+                    class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+                Sign In
+            </button>
+
+            <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
+        </div>
+
+        <!-- New Password Required (first-time / forced change) -->
+        <div id="newPasswordBox" class="hidden bg-white shadow-lg rounded-lg p-10">
+            <h2 class="text-3xl font-semibold mb-8">Set New Password</h2>
+            <p class="mb-6 text-gray-700">Your account requires a new password before you can continue.</p>
+
+            <input id="newPassword" type="password" placeholder="New Password"
+                   class="w-full p-4 border rounded-lg text-lg mb-4">
+            <input id="confirmPassword" type="password" placeholder="Confirm New Password"
+                   class="w-full p-4 border rounded-lg text-lg mb-4">
+
+            <button id="setNewPasswordButton"
+                    class="w-full bg-green-600 text-white py-4 rounded-lg text-xl hover:bg-green-700 transition">
+                Set Password & Continue
+            </button>
+
+            <p id="newPasswordError" class="text-red-600 mt-4 text-lg hidden"></p>
+        </div>
+
+        <!-- Database Form -->
+        <div id="databaseForm" class="hidden bg-white shadow-lg rounded-lg p-10 mt-10">
+            <h2 class="text-3xl font-semibold mb-8">Your Information</h2>
+
+            <div class="space-y-8 text-left">
+                <div>
+                    <label class="block font-medium mb-2 text-lg">User ID</label>
+                    <input id="id" type="text" disabled class="w-full p-4 border rounded-lg bg-gray-100 text-lg">
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Full Name</label>
+                    <input id="name" type="text" class="w-full p-4 border rounded-lg text-lg" placeholder="Enter full name">
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Chronic Illnesses & Conditions</label>
+                    <textarea id="illnesses" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="List chronic illnesses and medical conditions"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Allergies</label>
+                    <textarea id="allergies" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="Food, medication, environmental allergies"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Current Medications</label>
+                    <textarea id="medications" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="List medications and dosages"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Place of Birth</label>
+                    <input id="birth_place" type="text" class="w-full p-4 border rounded-lg text-lg" placeholder="City, Country">
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Life Milestones & Career</label>
+                    <textarea id="milestones" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="Education, career, family, significant events"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Food Preferences & Dietary Restrictions</label>
+                    <textarea id="food_preferences" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="Likes, dislikes, cultural/religious restrictions"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Hobbies & Interests</label>
+                    <textarea id="hobbies" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="Past and current activities enjoyed"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Significant Memories</label>
+                    <textarea id="memories" rows="3" class="w-full p-4 border rounded-lg text-lg" placeholder="Important life stories and cherished memories"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Family Information</label>
+                    <textarea id="family_info" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="Spouse, children, important relationships"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Daily Routine Preferences</label>
+                    <textarea id="routine" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="Wake/sleep times, meal preferences, daily habits"></textarea>
+                </div>
+                <div>
+                    <label class="block font-medium mb-2 text-lg">Cultural/Religious Background</label>
+                    <textarea id="cultural_background" rows="2" class="w-full p-4 border rounded-lg text-lg" placeholder="Important practices, holidays, traditions"></textarea>
+                </div>
+
+                <button id="saveButton"
+                        class="w-full bg-green-600 text-white py-4 rounded-lg text-xl hover:bg-green-700 transition">
+                    Save Changes
+                </button>
+
+                <button id="signOutButton"
+                        class="w-full mt-4 bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const COGNITO_CONFIG = {
+            UserPoolId: 'us-east-1_dnF4Uj5RY',
+            ClientId: '1eiq8thm150jeapi92ruvi58gk',
+            IdentityPoolId: 'us-east-1:0c4b3fb1-4717-4071-9970-6f1296078580',
+            Region: 'us-east-1',
+            DynamoDBTable: 'my_DynamoDB'
+        };
+
+        const pool = new AmazonCognitoIdentity.CognitoUserPool({
+            UserPoolId: COGNITO_CONFIG.UserPoolId,
+            ClientId: COGNITO_CONFIG.ClientId
+        });
+
+        const loginBox = document.getElementById("loginBox");
+        const newPasswordBox = document.getElementById("newPasswordBox");
+        const databaseForm = document.getElementById("databaseForm");
+        const loginError = document.getElementById("loginError");
+        const newPasswordError = document.getElementById("newPasswordError");
+
+        let currentCognitoUser = null;   // Will hold the user object when new password is required
+
+        function showError(el, msg) {
+            el.textContent = msg;
+            el.classList.remove("hidden");
+        }
+        function hideError(el) {
+            el.classList.add("hidden");
+        }
+
+        // Toggle password visibility (login)
+        document.getElementById("togglePassword").addEventListener("click", function () {
+            const pwd = document.getElementById("password");
+            const icon = document.getElementById("eyeIconPath");
+            const hidden = pwd.type === "password";
+            pwd.type = hidden ? "text" : "password";
+            icon.setAttribute("d", hidden
+                ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.542-7a9.97 9.97 0 012.291-3.95M9.88 9.88A3 3 0 0114.12 14.12M3 3l18 18"
+                : "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z");
+        });
+
+        // Normal sign-in
+        document.getElementById("signInButton").addEventListener("click", () => {
+            hideError(loginError);
+            const username = document.getElementById("username").value.trim();
+            const password = document.getElementById("password").value;
+
+            if (!username || !password) {
+                showError(loginError, "Please enter username and password");
+                return;
+            }
+
+            const authDetails = new AmazonCognitoIdentity.AuthenticationDetails({
+                Username: username,
+                Password: password
+            });
+
+            currentCognitoUser = new AmazonCognitoIdentity.CognitoUser({
+                Username: username,
+                Pool: pool
+            });
+
+            currentCognitoUser.authenticateUser(authDetails, {
+                onSuccess: result => {
+                    const idToken = result.getIdToken().getJwtToken();
+                    proceedAfterAuth(idToken, username);
+                },
+                onFailure: err => showError(loginError, err.message || "Login failed"),
+                newPasswordRequired: (userAttributes, requiredAttributes) => {
+                    // Cognito requires a new password (first login or forced reset)
+                    loginBox.classList.add("hidden");
+                    newPasswordBox.classList.remove("hidden");
+                    hideError(newPasswordError);
+                    // Store the cognito user for later completion
+                    // userAttributes contains email etc. – you can delete them if you don't want them as part of the challenge
+                    delete userAttributes.email_verified;
+                    delete userAttributes.phone_number_verified;
+                    currentCognitoUser["challengeAttributes"] = userAttributes;
+                }
+            });
+        });
+
+        // Set new password button
+        document.getElementById("setNewPasswordButton").addEventListener("click", () => {
+            hideError(newPasswordError);
+            const newPwd = document.getElementById("newPassword").value;
+            const confirmPwd = document.getElementById("confirmPassword").value;
+
+            if (newPwd !== confirmPwd) {
+                showError(newPasswordError, "Passwords do not match");
+                return;
+            }
+            if (newPwd.length < 8) {
+                showError(newPasswordError, "Password must be at least 8 characters");
+                return;
+            }
+
+            // Complete the new password challenge
+            currentCognitoUser.completeNewPasswordChallenge(newPwd, {}, {
+                onSuccess: result => {
+                    const idToken = result.getIdToken().getJwtToken();
+                    const username = currentCognitoUser.username;
+                    proceedAfterAuth(idToken, username);
+                },
+                onFailure: err => showError(newPasswordError, err.message || "Failed to set new password")
+            });
+        });
+
+        // After successful authentication (normal or after new password)
+        function proceedAfterAuth(idToken, username) {
+            AWS.config.region = COGNITO_CONFIG.Region;
+            AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+                IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
+                Logins: {
+                    [`cognito-idp.${COGNITO_CONFIG.Region}.amazonaws.com/${COGNITO_CONFIG.UserPoolId}`]: idToken
+                }
+            });
+
+            AWS.config.credentials.get(err => {
+                if (err) {
+                    showError(loginError, "AWS credentials error: " + err.message);
+                    return;
+                }
+
+                document.getElementById("id").value = username;
+                loadUserData(username);
+
+                newPasswordBox.classList.add("hidden");
+                loginBox.classList.add("hidden");
+                databaseForm.classList.remove("hidden");
+            });
+        }
+
+        function loadUserData(userId) {
+            const docClient = new AWS.DynamoDB.DocumentClient();
+            docClient.get({
+                TableName: COGNITO_CONFIG.DynamoDBTable,
+                Key: { User_ID: userId }
+            }, (err, data) => {
+                if (err || !data.Item) return;
+                document.getElementById("name").value = data.Item.name || "";
+                document.getElementById("illnesses").value = data.Item.illnesses || "";
+                document.getElementById("allergies").value = data.Item.allergies || "";
+                document.getElementById("medications").value = data.Item.medications || "";
+                document.getElementById("birth_place").value = data.Item.birth_place || "";
+                document.getElementById("milestones").value = data.Item.milestones || "";
+                document.getElementById("food_preferences").value = data.Item.food_preferences || "";
+                document.getElementById("hobbies").value = data.Item.hobbies || "";
+                document.getElementById("memories").value = data.Item.memories || "";
+                document.getElementById("family_info").value = data.Item.family_info || "";
+                document.getElementById("routine").value = data.Item.routine || "";
+                document.getElementById("cultural_background").value = data.Item.cultural_background || "";
+            });
+        }
+
+        document.getElementById("saveButton").addEventListener("click", () => {
+            const userId = document.getElementById("id").value;
+            const docClient = new AWS.DynamoDB.DocumentClient();
+
+            const item = {
+                User_ID: userId,
+                name: document.getElementById("name").value.trim(),
+                illnesses: document.getElementById("illnesses").value.trim(),
+                allergies: document.getElementById("allergies").value.trim(),
+                medications: document.getElementById("medications").value.trim(),
+                birth_place: document.getElementById("birth_place").value.trim(),
+                milestones: document.getElementById("milestones").value.trim(),
+                food_preferences: document.getElementById("food_preferences").value.trim(),
+                hobbies: document.getElementById("hobbies").value.trim(),
+                memories: document.getElementById("memories").value.trim(),
+                family_info: document.getElementById("family_info").value.trim(),
+                routine: document.getElementById("routine").value.trim(),
+                cultural_background: document.getElementById("cultural_background").value.trim(),
+                updatedAt: new Date().toISOString()
+            };
+
+            docClient.put({
+                TableName: COGNITO_CONFIG.DynamoDBTable,
+                Item: item
+            }, err => {
+                if (err) alert("Error saving: " + err.message);
+                else alert("Saved successfully!");
+            });
+        });
+
+        document.getElementById("signOutButton").addEventListener("click", () => {
+            if (pool.getCurrentUser()) pool.getCurrentUser().signOut();
+            location.reload();
+        });
+    </script>
+</body>
+</html>
