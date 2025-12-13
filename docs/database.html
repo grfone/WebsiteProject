@@ -55,7 +55,7 @@
         <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
 
-    <!-- New Password Required (first-time / forced change) -->
+    <!-- New Password Required (opcional, lo dejamos por si lo usas) -->
     <div id="newPasswordBox" class="hidden bg-white shadow-lg rounded-lg p-10">
         <h2 class="text-3xl font-semibold mb-8">Set New Password</h2>
         <p class="mb-6 text-gray-700">Your account requires a new password before you can continue.</p>
@@ -73,64 +73,63 @@
         <p id="newPasswordError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
 
+    <div id="databaseForm" class="hidden bg-white shadow-lg rounded-lg p-10 mt-10 text-left">
+        <h2 class="text-3xl mb-6 text-center">Important Information</h2>
 
-<div id="databaseForm" class="hidden bg-white shadow-lg rounded-lg p-10 mt-10 text-left">
-    <h2 class="text-3xl mb-6 text-center">Important Information</h2>
+        <label>User ID (Email)</label>
+        <input id="id" disabled class="w-full p-3 border rounded mb-4 bg-gray-100">
 
-    <label>User ID</label>
-    <input id="id" disabled class="w-full p-3 border rounded mb-4 bg-gray-100">
+        <label>Full Name</label>
+        <input id="name" class="w-full p-3 border rounded mb-4">
 
-    <label>Full Name</label>
-    <input id="name" class="w-full p-3 border rounded mb-4">
+        <label>Name He/She Likes to Be Called</label>
+        <input id="preferred_name" class="w-full p-3 border rounded mb-4">
 
-    <label>Name He/She Likes to Be Called</label>
-    <input id="preferred_name" class="w-full p-3 border rounded mb-4">
+        <label>Chronic Illnesses & Conditions</label>
+        <textarea id="illnesses" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Chronic Illnesses & Conditions</label>
-    <textarea id="illnesses" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Allergies</label>
+        <textarea id="allergies" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Allergies</label>
-    <textarea id="allergies" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Current Medications</label>
+        <textarea id="medications" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Current Medications</label>
-    <textarea id="medications" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Place of Birth</label>
+        <input id="birth_place" class="w-full p-3 border rounded mb-4">
 
-    <label>Place of Birth</label>
-    <input id="birth_place" class="w-full p-3 border rounded mb-4">
+        <label>Life Milestones & Career</label>
+        <textarea id="milestones" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Life Milestones & Career</label>
-    <textarea id="milestones" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Food Preferences & Dietary Restrictions</label>
+        <textarea id="food_preferences" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Food Preferences & Dietary Restrictions</label>
-    <textarea id="food_preferences" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Hobbies & Interests</label>
+        <textarea id="hobbies" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Hobbies & Interests</label>
-    <textarea id="hobbies" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Significant Memories</label>
+        <textarea id="memories" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Significant Memories</label>
-    <textarea id="memories" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Family Information</label>
+        <textarea id="family_info" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Family Information</label>
-    <textarea id="family_info" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Daily Routine Preferences</label>
+        <textarea id="routine" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Daily Routine Preferences</label>
-    <textarea id="routine" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Cultural / Religious Background</label>
+        <textarea id="cultural_background" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Cultural / Religious Background</label>
-    <textarea id="cultural_background" class="w-full p-3 border rounded mb-4"></textarea>
+        <label>Your Name as Known by the Elder</label>
+        <input id="known_name" class="w-full p-3 border rounded mb-4">
 
-    <label>Your Name as Known by the Elder</label>
-    <input id="known_name" class="w-full p-3 border rounded mb-4">
+        <label>Relationship With Him/Her</label>
+        <input id="relationship" class="w-full p-3 border rounded mb-4">
 
-    <label>Relationship With Him/Her</label>
-    <input id="relationship" class="w-full p-3 border rounded mb-4">
+        <label>Your Phone Number</label>
+        <input id="phone" class="w-full p-3 border rounded mb-6">
 
-    <label>Your Phone Number</label>
-    <input id="phone" class="w-full p-3 border rounded mb-6">
-
-    <button id="saveButton" class="w-full bg-green-600 text-white py-3 rounded mb-4">Save</button>
-    <button id="signOutButton" class="w-full bg-gray-600 text-white py-3 rounded">Sign Out</button>
-</div>
+        <button id="saveButton" class="w-full bg-green-600 text-white py-3 rounded mb-4">Save</button>
+        <button id="signOutButton" class="w-full bg-gray-600 text-white py-3 rounded">Sign Out</button>
+    </div>
 </main>
 
 <script>
@@ -147,23 +146,31 @@ const pool = new AmazonCognitoIdentity.CognitoUserPool({
     ClientId: COGNITO_CONFIG.ClientId
 });
 
-signInButton.onclick = () => {
-    const auth = new AmazonCognitoIdentity.AuthenticationDetails({
-        Username: username.value,
-        Password: password.value
+document.getElementById("signInButton").onclick = () => {
+    const usernameInput = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!usernameInput || !password) {
+        document.getElementById("loginError").textContent = "Please enter username/email and password";
+        document.getElementById("loginError").classList.remove("hidden");
+        return;
+    }
+
+    const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails({
+        Username: usernameInput,
+        Password: password
     });
 
-    const user = new AmazonCognitoIdentity.CognitoUser({
-        Username: username.value,
+    const cognitoUser = new AmazonCognitoIdentity.CognitoUser({
+        Username: usernameInput,
         Pool: pool
     });
 
-    user.authenticateUser(auth, {
+    cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: result => {
-            // Decodificar el ID Token para extraer el email
             const idToken = result.getIdToken().getJwtToken();
             const payload = JSON.parse(atob(idToken.split('.')[1]));
-            const userEmail = payload.email;  // Este es el email real del usuario
+            const userEmail = payload.email;
 
             if (!userEmail) {
                 document.getElementById("loginError").textContent = "No se pudo obtener el email del usuario";
@@ -171,7 +178,6 @@ signInButton.onclick = () => {
                 return;
             }
 
-            // Configurar credenciales AWS
             AWS.config.region = COGNITO_CONFIG.Region;
             AWS.config.credentials = new AWS.CognitoIdentityCredentials({
                 IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
@@ -182,40 +188,42 @@ signInButton.onclick = () => {
 
             AWS.config.credentials.get(err => {
                 if (err) {
-                    document.getElementById("loginError").textContent = "Error de credenciales: " + err.message;
+                    document.getElementById("loginError").textContent = "Error configurando credenciales: " + err.message;
                     document.getElementById("loginError").classList.remove("hidden");
                     return;
                 }
 
-                // Ahora usamos userEmail como User_ID en DynamoDB
-                // ==== database.html ====
-                if (document.getElementById("id")) {
-                    document.getElementById("id").value = userEmail;
-                }
+                // Mostrar email en el campo User ID
+                document.getElementById("id").value = userEmail;
+
                 document.getElementById("loginBox").classList.add("hidden");
+                document.getElementById("databaseForm").classList.remove("hidden");
 
-                if (document.getElementById("databaseForm")) {
-                    document.getElementById("databaseForm").classList.remove("hidden");
-                    loadUserData(userEmail);
-                }
-
-                if (document.getElementById("companionContainer")) {
-                    document.getElementById("companionContainer").classList.remove("hidden");
-                    loadUserData(userEmail);
-                }
+                loadUserData(userEmail);
             });
         },
-        onFailure: e => loginError.textContent = e.message
+        onFailure: err => {
+            document.getElementById("loginError").textContent = err.message || "Login failed";
+            document.getElementById("loginError").classList.remove("hidden");
+        }
     });
 };
 
-function loadUserData(userId) {
+function loadUserData(userEmail) {
     const docClient = new AWS.DynamoDB.DocumentClient();
     docClient.get({
         TableName: COGNITO_CONFIG.DynamoDBTable,
-        Key: { User_ID: userId }
+        Key: { User_ID: userEmail }
     }, (err, data) => {
-        if (err || !data.Item) return;
+        if (err) {
+            console.error("Error loading data:", err);
+            return;
+        }
+        if (!data.Item) {
+            console.log("No data found for this user");
+            return;
+        }
+
         document.getElementById("name").value = data.Item.name || "";
         document.getElementById("preferred_name").value = data.Item.preferred_name || "";
         document.getElementById("illnesses").value = data.Item.illnesses || "";
@@ -236,11 +244,16 @@ function loadUserData(userId) {
 }
 
 document.getElementById("saveButton").addEventListener("click", () => {
-    const userId = document.getElementById("id").value;
+    const userEmail = document.getElementById("id").value.trim();
+    if (!userEmail) {
+        alert("Error: No se detectó el email del usuario");
+        return;
+    }
+
     const docClient = new AWS.DynamoDB.DocumentClient();
 
     const item = {
-        User_ID: userId,
+        User_ID: userEmail,
         name: document.getElementById("name").value.trim(),
         preferred_name: document.getElementById("preferred_name").value.trim(),
         illnesses: document.getElementById("illnesses").value.trim(),
@@ -264,15 +277,21 @@ document.getElementById("saveButton").addEventListener("click", () => {
         TableName: COGNITO_CONFIG.DynamoDBTable,
         Item: item
     }, err => {
-        if (err) alert("Error saving: " + err.message);
-        else alert("Saved successfully!");
+        if (err) {
+            alert("Error saving: " + err.message);
+        } else {
+            alert("Saved successfully!");
+        }
     });
 });
 
-signOutButton.onclick = () => {
-    pool.getCurrentUser()?.signOut();
+document.getElementById("signOutButton").onclick = () => {
+    if (pool.getCurrentUser()) {
+        pool.getCurrentUser().signOut();
+    }
     location.reload();
 };
 </script>
+
 </body>
 </html>
