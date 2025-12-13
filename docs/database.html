@@ -119,7 +119,7 @@
     <label>Cultural / Religious Background</label>
     <textarea id="cultural_background" class="w-full p-3 border rounded mb-4"></textarea>
 
-    <label>Name Known by the Elder</label>
+    <label>Your Name as Known by the Elder</label>
     <input id="known_name" class="w-full p-3 border rounded mb-4">
 
     <label>Relationship With Him/Her</label>
@@ -180,44 +180,66 @@ signInButton.onclick = () => {
     });
 };
 
-function loadUserData(uid) {
-    const db = new AWS.DynamoDB.DocumentClient();
-    db.get({ TableName: COGNITO_CONFIG.DynamoDBTable, Key: { User_ID: uid } },
-        (_, d) => {
-            if (!d?.Item) return;
-            Object.keys(d.Item).forEach(k => {
-                if (document.getElementById(k))
-                    document.getElementById(k).value = d.Item[k];
-            });
-        });
+function loadUserData(userId) {
+    const docClient = new AWS.DynamoDB.DocumentClient();
+    docClient.get({
+        TableName: COGNITO_CONFIG.DynamoDBTable,
+        Key: { User_ID: userId }
+    }, (err, data) => {
+        if (err || !data.Item) return;
+
+        document.getElementById("name").value = data.Item.name || "";
+        document.getElementById("preferred_name").value = data.Item.preferred_name || "";
+        document.getElementById("illnesses").value = data.Item.illnesses || "";
+        document.getElementById("allergies").value = data.Item.allergies || "";
+        document.getElementById("medications").value = data.Item.medications || "";
+        document.getElementById("birth_place").value = data.Item.birth_place || "";
+        document.getElementById("milestones").value = data.Item.milestones || "";
+        document.getElementById("food_preferences").value = data.Item.food_preferences || "";
+        document.getElementById("hobbies").value = data.Item.hobbies || "";
+        document.getElementById("memories").value = data.Item.memories || "";
+        document.getElementById("family_info").value = data.Item.family_info || "";
+        document.getElementById("routine").value = data.Item.routine || "";
+        document.getElementById("cultural_background").value = data.Item.cultural_background || "";
+        document.getElementById("known_name").value = data.Item.known_name || "";
+        document.getElementById("relationship").value = data.Item.relationship || "";
+        document.getElementById("phone").value = data.Item.phone || "";
+    });
 }
 
-saveButton.onclick = () => {
-    const db = new AWS.DynamoDB.DocumentClient();
+document.getElementById("saveButton").addEventListener("click", () => {
+    const userId = document.getElementById("id").value;
+    const docClient = new AWS.DynamoDB.DocumentClient();
+
     const item = {
-        User_ID: id.value,
-        name: name.value,
-        preferred_name: preferred_name.value,
-        illnesses: illnesses.value,
-        allergies: allergies.value,
-        medications: medications.value,
-        birth_place: birth_place.value,
-        milestones: milestones.value,
-        food_preferences: food_preferences.value,
-        hobbies: hobbies.value,
-        memories: memories.value,
-        family_info: family_info.value,
-        routine: routine.value,
-        cultural_background: cultural_background.value,
-        known_name: known_name.value,
-        relationship: relationship.value,
-        phone: phone.value,
+        User_ID: userId,
+        name: document.getElementById("name").value.trim(),
+        preferred_name: document.getElementById("preferred_name").value.trim(),
+        illnesses: document.getElementById("illnesses").value.trim(),
+        allergies: document.getElementById("allergies").value.trim(),
+        medications: document.getElementById("medications").value.trim(),
+        birth_place: document.getElementById("birth_place").value.trim(),
+        milestones: document.getElementById("milestones").value.trim(),
+        food_preferences: document.getElementById("food_preferences").value.trim(),
+        hobbies: document.getElementById("hobbies").value.trim(),
+        memories: document.getElementById("memories").value.trim(),
+        family_info: document.getElementById("family_info").value.trim(),
+        routine: document.getElementById("routine").value.trim(),
+        cultural_background: document.getElementById("cultural_background").value.trim(),
+        known_name: document.getElementById("known_name").value.trim(),
+        relationship: document.getElementById("relationship").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
         updatedAt: new Date().toISOString()
     };
 
-    db.put({ TableName: COGNITO_CONFIG.DynamoDBTable, Item: item },
-        e => alert(e ? e.message : "Saved successfully"));
-};
+    docClient.put({
+        TableName: COGNITO_CONFIG.DynamoDBTable,
+        Item: item
+    }, err => {
+        if (err) alert("Error saving: " + err.message);
+        else alert("Saved successfully!");
+    });
+});
 
 signOutButton.onclick = () => {
     pool.getCurrentUser()?.signOut();

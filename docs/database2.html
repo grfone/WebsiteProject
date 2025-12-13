@@ -288,7 +288,9 @@
                 Key: { User_ID: userId }
             }, (err, data) => {
                 if (err || !data.Item) return;
+
                 document.getElementById("name").value = data.Item.name || "";
+                document.getElementById("preferred_name").value = data.Item.preferred_name || "";
                 document.getElementById("illnesses").value = data.Item.illnesses || "";
                 document.getElementById("allergies").value = data.Item.allergies || "";
                 document.getElementById("medications").value = data.Item.medications || "";
@@ -300,6 +302,9 @@
                 document.getElementById("family_info").value = data.Item.family_info || "";
                 document.getElementById("routine").value = data.Item.routine || "";
                 document.getElementById("cultural_background").value = data.Item.cultural_background || "";
+                document.getElementById("known_name").value = data.Item.known_name || "";
+                document.getElementById("relationship").value = data.Item.relationship || "";
+                document.getElementById("phone").value = data.Item.phone || "";
             });
         }
 
@@ -310,6 +315,7 @@
             const item = {
                 User_ID: userId,
                 name: document.getElementById("name").value.trim(),
+                preferred_name: document.getElementById("preferred_name").value.trim(),
                 illnesses: document.getElementById("illnesses").value.trim(),
                 allergies: document.getElementById("allergies").value.trim(),
                 medications: document.getElementById("medications").value.trim(),
@@ -321,8 +327,20 @@
                 family_info: document.getElementById("family_info").value.trim(),
                 routine: document.getElementById("routine").value.trim(),
                 cultural_background: document.getElementById("cultural_background").value.trim(),
+                known_name: document.getElementById("known_name").value.trim(),
+                relationship: document.getElementById("relationship").value.trim(),
+                phone: document.getElementById("phone").value.trim(),
                 updatedAt: new Date().toISOString()
             };
+
+            docClient.put({
+                TableName: COGNITO_CONFIG.DynamoDBTable,
+                Item: item
+            }, err => {
+                if (err) alert("Error saving: " + err.message);
+                else alert("Saved successfully!");
+            });
+        });
 
             docClient.put({
                 TableName: COGNITO_CONFIG.DynamoDBTable,
