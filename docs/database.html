@@ -168,9 +168,10 @@ document.getElementById("signInButton").onclick = () => {
 
     cognitoUser.authenticateUser(authenticationDetails, {
         onSuccess: result => {
+            // Decodificar el ID Token para extraer el email
             const idToken = result.getIdToken().getJwtToken();
             const payload = JSON.parse(atob(idToken.split('.')[1]));
-            const userEmail = payload.email;
+            const userEmail = payload.email;  // Este es el email real del usuario
 
             if (!userEmail) {
                 document.getElementById("loginError").textContent = "No se pudo obtener el email del usuario";
@@ -178,6 +179,7 @@ document.getElementById("signInButton").onclick = () => {
                 return;
             }
 
+            // Configurar credenciales AWS
             AWS.config.region = COGNITO_CONFIG.Region;
             AWS.config.credentials = new AWS.CognitoIdentityCredentials({
                 IdentityPoolId: COGNITO_CONFIG.IdentityPoolId,
@@ -188,18 +190,27 @@ document.getElementById("signInButton").onclick = () => {
 
             AWS.config.credentials.get(err => {
                 if (err) {
-                    document.getElementById("loginError").textContent = "Error configurando credenciales: " + err.message;
+                    document.getElementById("loginError").textContent = "Error de credenciales: " + err.message;
                     document.getElementById("loginError").classList.remove("hidden");
                     return;
                 }
 
-                // Mostrar email en el campo User ID
-                document.getElementById("id").value = userEmail;
-
+                // Ahora usamos userEmail como User_ID en DynamoDB
+                // ==== database.html ====
+                if (document.getElementById("id")) {
+                    document.getElementById("id").value = userEmail;
+                }
                 document.getElementById("loginBox").classList.add("hidden");
-                document.getElementById("databaseForm").classList.remove("hidden");
 
-                loadUserData(userEmail);
+                if (document.getElementById("databaseForm")) {
+                    document.getElementById("databaseForm").classList.remove("hidden");
+                    loadUserData(userEmail);
+                }
+
+                if (document.getElementById("companionContainer")) {
+                    document.getElementById("companionContainer").classList.remove("hidden");
+                    loadUserData(userEmail);
+                }
             });
         },
         onFailure: err => {

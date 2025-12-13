@@ -146,6 +146,7 @@ document.getElementById("signInButton").onclick = () => {
                 }
             });
         },
+        },
         onFailure: err => {
             document.getElementById("loginError").textContent = err.message || "Login failed";
             document.getElementById("loginError").classList.remove("hidden");
@@ -165,23 +166,22 @@ function loadUserData(userId) {
         }
 
         const vars = {
-            userName: data.Item.preferred_name || data.Item.name || "",
             fullName: data.Item.name || "",
+            userName: data.Item.preferred_name || "",
             illnesses: data.Item.illnesses || "",
             allergies: data.Item.allergies || "",
             medications: data.Item.medications || "",
             birthPlace: data.Item.birth_place || "",
+            milestones: data.Item.milestones || "",
+            foodPreferences: data.Item.food_preferences || "",
             hobbies: data.Item.hobbies || "",
             memories: data.Item.memories || "",
+            familyInfo: data.Item.family_info || "",
             routine: data.Item.routine || "",
             culturalBackground: data.Item.cultural_background || "",
             knownName: data.Item.known_name || "",
             relationship: data.Item.relationship || "",
-            phone: data.Item.phone || "",
-            // Variables que faltaban en happy_chat.html original
-            milestones: data.Item.milestones || "",
-            foodPreferences: data.Item.food_preferences || "",
-            familyInfo: data.Item.family_info || ""
+            phone: data.Item.phone || ""
         };
 
         const widget = document.getElementById("elevenWidget");
