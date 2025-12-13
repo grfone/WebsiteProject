@@ -342,15 +342,6 @@
             });
         });
 
-            docClient.put({
-                TableName: COGNITO_CONFIG.DynamoDBTable,
-                Item: item
-            }, err => {
-                if (err) alert("Error saving: " + err.message);
-                else alert("Saved successfully!");
-            });
-        });
-
         document.getElementById("signOutButton").addEventListener("click", () => {
             if (pool.getCurrentUser()) pool.getCurrentUser().signOut();
             location.reload();

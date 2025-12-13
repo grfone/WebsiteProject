@@ -80,18 +80,22 @@ const pool = new AmazonCognitoIdentity.CognitoUserPool({
 });
 
 document.getElementById("signInButton").onclick = () => {
-    const username = document.getElementById("username").value.trim();
+    const usernameInput = document.getElementById("username").value.trim();
     const password = document.getElementById("password").value;
 
-    if (!username || !password) return;
+    if (!usernameInput || !password) {
+        document.getElementById("loginError").textContent = "Please enter username/email and password";
+        document.getElementById("loginError").classList.remove("hidden");
+        return;
+    }
 
     const auth = new AmazonCognitoIdentity.AuthenticationDetails({
-        Username: username,
+        Username: usernameInput,
         Password: password
     });
 
     const user = new AmazonCognitoIdentity.CognitoUser({
-        Username: username,
+        Username: usernameInput,
         Pool: pool
     });
 
@@ -107,11 +111,12 @@ document.getElementById("signInButton").onclick = () => {
             });
 
             AWS.config.credentials.get(() => {
-                loadUserData(username);
+                const realUserId = user.getUsername(); // Este es el User_ID real (email o username según configuración)
+                loadUserData(realUserId);
             });
         },
         onFailure: err => {
-            document.getElementById("loginError").textContent = err.message;
+            document.getElementById("loginError").textContent = err.message || "Login failed";
             document.getElementById("loginError").classList.remove("hidden");
         }
     });
@@ -123,7 +128,10 @@ function loadUserData(userId) {
         TableName: COGNITO_CONFIG.DynamoDBTable,
         Key: { User_ID: userId }
     }, (err, data) => {
-        if (err || !data.Item) return;
+        if (err || !data.Item) {
+            console.error(err || "No data found");
+            return;
+        }
 
         const vars = {
             userName: data.Item.preferred_name || data.Item.name || "",
@@ -138,7 +146,11 @@ function loadUserData(userId) {
             culturalBackground: data.Item.cultural_background || "",
             knownName: data.Item.known_name || "",
             relationship: data.Item.relationship || "",
-            phone: data.Item.phone || ""
+            phone: data.Item.phone || "",
+            // Variables que faltaban en happy_chat.html original
+            milestones: data.Item.milestones || "",
+            foodPreferences: data.Item.food_preferences || "",
+            familyInfo: data.Item.family_info || ""
         };
 
         const widget = document.getElementById("elevenWidget");

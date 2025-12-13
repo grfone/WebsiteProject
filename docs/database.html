@@ -75,7 +75,7 @@
 
 
 <div id="databaseForm" class="hidden bg-white shadow-lg rounded-lg p-10 mt-10 text-left">
-    <h2 class="text-3xl mb-6 text-center">Your Information</h2>
+    <h2 class="text-3xl mb-6 text-center">Important Information</h2>
 
     <label>User ID</label>
     <input id="id" disabled class="w-full p-3 border rounded mb-4 bg-gray-100">
@@ -170,10 +170,11 @@ signInButton.onclick = () => {
             });
 
             AWS.config.credentials.get(() => {
-                id.value = user.username;
+                const realUserId = user.getUsername();
+                id.value = realUserId;
                 loginBox.classList.add("hidden");
                 databaseForm.classList.remove("hidden");
-                loadUserData(user.username);
+                loadUserData(realUserId);
             });
         },
         onFailure: e => loginError.textContent = e.message
