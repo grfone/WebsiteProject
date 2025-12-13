@@ -1,20 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GRF - Happy Chat</title>
-    <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico">
+    <link rel="icon" type="image/x-icon" href="images/favicon_16_to_1024.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- ElevenLabs -->
-    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async></script>
-</head>
+    <!-- Correct current ElevenLabs embed script -->
+    <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
 
+</head>
 <body class="bg-gray-100 font-sans">
 
-<header class="relative bg-cover bg-center h-64 flex items-center justify-center"
-        style="background-image: url('images/banner.jpg')">
+<header class="relative bg-cover bg-center h-64 flex items-center justify-center" style="background-image: url('images/banner.jpg')">
     <h1 class="text-6xl font-bold text-white drop-shadow-lg">GRF</h1>
 </header>
 
@@ -27,50 +26,38 @@
     </ul>
 </nav>
 
-<main class="max-w-3xl mx-auto my-10 p-6 text-center">
+<main class="max-w-5xl mx-auto my-10 px-6">
 
     <!-- LOGIN BOX -->
-    <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10">
+    <div id="loginBox" class="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-10 text-center">
         <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
-
-        <input id="username" type="email" placeholder="Email"
-               class="w-full p-4 border rounded-lg text-lg mb-4">
-
+        <input id="username" type="email" placeholder="Email" class="w-full p-4 border rounded-lg text-lg mb-4" />
         <div class="relative mb-6">
-            <input id="password" type="password" placeholder="Password"
-                   class="w-full p-4 border rounded-lg text-lg pr-12">
-            <button type="button" id="togglePassword"
-                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
+            <input id="password" type="password" placeholder="Password" class="w-full p-4 border rounded-lg text-lg pr-12" />
+            <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z
-                             M2.458 12C3.732 7.943 7.523 5 12 5
-                             c4.478 0 8.268 2.943 9.542 7
-                             -1.274 4.057-5.064 7-9.542 7
-                             -4.477 0-8.268-2.943-9.542-7z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
             </button>
         </div>
-
-        <button id="signInButton"
-                class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+        <button id="signInButton" class="w-full bg-blue-600 text-white py-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
             Sign In
         </button>
-
         <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
 
-    <!-- COMPANION AREA -->
+    <!-- COMPANION AREA - shown after "login" -->
     <div id="companionContainer" class="hidden flex flex-col items-center mt-16 space-y-12">
         <img src="images/heartwarming_scene.jpg"
-             class="w-full max-w-3xl rounded-2xl shadow-2xl"
-             alt="Heartwarming scene">
+             alt="Heartwarming scene"
+             class="w-full max-w-3xl rounded-2xl shadow-2xl" />
 
         <elevenlabs-convai
             agent-id="agent_7001kc96ge93fwtrmpw4vt2qe70c"
-            dynamic-variables='{"userName":"Jacobo"}'
+            dynamic-variables='{"userName": "Jacobo"}'
             class="w-full max-w-3xl">
         </elevenlabs-convai>
+
     </div>
 
 </main>
