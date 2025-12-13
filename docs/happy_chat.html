@@ -29,20 +29,29 @@
 <main class="max-w-5xl mx-auto my-10 px-6">
 
     <!-- LOGIN BOX -->
-    <div id="loginBox" class="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-10 text-center">
+    <div id="loginBox" class="bg-white shadow-lg rounded-lg p-10 max-w-lg mx-auto">
         <h2 class="text-3xl font-semibold mb-8">Happy Chat Login</h2>
-        <input id="username" type="email" placeholder="Email" class="w-full p-4 border rounded-lg text-lg mb-4" />
+
+        <input id="username" type="email" placeholder="Email"
+               class="w-full p-4 border rounded-lg text-lg mb-4">
+
         <div class="relative mb-6">
-            <input id="password" type="password" placeholder="Password" class="w-full p-4 border rounded-lg text-lg pr-12" />
-            <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600">
+            <input id="password" type="password" placeholder="Password"
+                   class="w-full p-4 border rounded-lg text-lg pr-12">
+            <button type="button" id="togglePassword"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                 </svg>
             </button>
         </div>
-        <button id="signInButton" class="w-full bg-blue-600 text-white py-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
+
+        <button id="signInButton"
+                class="w-full bg-blue-600 text-white py-4 rounded-lg text-xl hover:bg-blue-700 transition">
             Sign In
         </button>
+
         <p id="loginError" class="text-red-600 mt-4 text-lg hidden"></p>
     </div>
 
