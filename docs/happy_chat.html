@@ -146,7 +146,6 @@ document.getElementById("signInButton").onclick = () => {
                 }
             });
         },
-        },
         onFailure: err => {
             document.getElementById("loginError").textContent = err.message || "Login failed";
             document.getElementById("loginError").classList.remove("hidden");
