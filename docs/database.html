@@ -187,7 +187,6 @@ function loadUserData(userId) {
         Key: { User_ID: userId }
     }, (err, data) => {
         if (err || !data.Item) return;
-
         document.getElementById("name").value = data.Item.name || "";
         document.getElementById("preferred_name").value = data.Item.preferred_name || "";
         document.getElementById("illnesses").value = data.Item.illnesses || "";
