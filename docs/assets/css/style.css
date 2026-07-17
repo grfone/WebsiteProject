@@ -1,0 +1,555 @@
+/* ===========================================
+   Guillermo Ramajo Fernández Portfolio
+   Scientific · Minimal · Modern
+=========================================== */
+
+/* ---------- Variables ---------- */
+
+:root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+
+    --text: #1f2937;
+    --text-light: #6b7280;
+
+    --background: #f8fafc;
+    --surface: #ffffff;
+
+    --border: #e5e7eb;
+
+    --success: #16a34a;
+
+    --shadow:
+        0 6px 24px rgba(0,0,0,.05);
+
+    --radius: 12px;
+
+    --content-width: 1100px;
+}
+
+/* ---------- Reset ---------- */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+    background:var(--background);
+
+    color:var(--text);
+
+    line-height:1.7;
+
+    font-size:17px;
+}
+
+/* ---------- Typography ---------- */
+
+h1,h2,h3,h4{
+
+    font-weight:700;
+
+    line-height:1.2;
+
+    color:#111827;
+
+    margin-bottom:1rem;
+
+}
+
+h1{
+
+    font-size:3rem;
+
+}
+
+h2{
+
+    font-size:2rem;
+
+    margin-top:3rem;
+
+}
+
+h3{
+
+    font-size:1.35rem;
+
+}
+
+p{
+
+    margin-bottom:1rem;
+
+    color:var(--text-light);
+
+}
+
+a{
+
+    color:var(--primary);
+
+    text-decoration:none;
+
+    transition:.2s;
+
+}
+
+a:hover{
+
+    color:var(--primary-dark);
+
+}
+
+/* ---------- Layout ---------- */
+
+.container{
+
+    width:min(100%,var(--content-width));
+
+    margin:auto;
+
+    padding:0 2rem;
+
+}
+
+section{
+
+    padding:4rem 0;
+
+}
+
+/* ---------- Header ---------- */
+
+header{
+
+    background:white;
+
+    border-bottom:1px solid var(--border);
+
+    position:sticky;
+
+    top:0;
+
+    z-index:100;
+
+}
+
+nav{
+
+    max-width:var(--content-width);
+
+    margin:auto;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:1.2rem 2rem;
+
+}
+
+.logo{
+
+    font-size:1.3rem;
+
+    font-weight:700;
+
+    letter-spacing:.08em;
+
+}
+
+nav ul{
+
+    display:flex;
+
+    gap:2rem;
+
+    list-style:none;
+
+}
+
+nav li{
+
+    font-size:.95rem;
+
+}
+
+/* ---------- Hero ---------- */
+
+.hero{
+
+    text-align:center;
+
+    padding:7rem 2rem;
+
+}
+
+.hero img{
+
+    width:180px;
+    height:180px;
+
+    object-fit:cover;
+
+    margin-bottom:2rem;
+
+    box-shadow:var(--shadow);
+
+}
+
+.hero p{
+
+    max-width:720px;
+
+    margin:auto;
+
+    font-size:1.15rem;
+
+}
+
+/* ---------- Buttons ---------- */
+
+.button{
+
+    display:inline-block;
+
+    margin-top:1rem;
+
+    padding:.85rem 1.6rem;
+
+    background:var(--primary);
+
+    color:white;
+
+    border-radius:8px;
+
+    font-weight:600;
+
+    transition:.2s;
+
+}
+
+.button:hover{
+
+    background:var(--primary-dark);
+
+    color:white;
+
+}
+
+/* ---------- Cards ---------- */
+
+.card{
+
+    background:var(--surface);
+
+    border:1px solid var(--border);
+
+    border-radius:var(--radius);
+
+    padding:2rem;
+
+    box-shadow:var(--shadow);
+
+    transition:.2s;
+
+}
+
+.card:hover{
+
+    transform:translateY(-3px);
+
+}
+
+/* ---------- Grid ---------- */
+
+.grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+
+    gap:2rem;
+
+}
+
+/* ---------- Tags ---------- */
+
+.tag{
+
+    display:inline-block;
+
+    padding:.35rem .8rem;
+
+    margin:.2rem;
+
+    background:#eff6ff;
+
+    color:var(--primary);
+
+    border-radius:999px;
+
+    font-size:.85rem;
+
+    font-weight:600;
+
+}
+
+/* ---------- Tables ---------- */
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+}
+
+th,td{
+
+    padding:1rem;
+
+    border-bottom:1px solid var(--border);
+
+    text-align:left;
+
+}
+
+/* ---------- Images ---------- */
+
+img{
+
+    max-width:100%;
+
+}
+
+/* ---------- Code ---------- */
+
+code{
+
+    background:#eef2f7;
+
+    padding:.2rem .45rem;
+
+    border-radius:5px;
+
+    font-family:Consolas, monospace;
+
+}
+
+/* ---------- Footer ---------- */
+
+footer{
+
+    margin-top:6rem;
+
+    border-top:1px solid var(--border);
+
+    padding:3rem 0;
+
+    text-align:center;
+
+    color:var(--text-light);
+
+    font-size:.9rem;
+
+}
+
+/* ---------- Utilities ---------- */
+
+.center{
+
+    text-align:center;
+
+}
+
+.mt{
+
+    margin-top:2rem;
+
+}
+
+.mb{
+
+    margin-bottom:2rem;
+
+}
+
+/* ---------- Navigation ---------- */
+
+/* Hide hamburger on desktop */
+#menu-btn{
+    display:none;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width:768px){
+
+    h1{
+        font-size:2.2rem;
+    }
+
+    h2{
+        font-size:1.6rem;
+    }
+
+    .hero{
+        padding:4rem 1rem;
+    }
+
+    nav{
+        flex-wrap:wrap;
+    }
+
+    /* Show hamburger */
+    #menu-btn{
+        display:block;
+        background:none;
+        border:none;
+        font-size:1.6rem;
+        cursor:pointer;
+        color:var(--text);
+    }
+
+    /* Hide menu initially */
+    #nav-menu{
+        display:none;
+        width:100%;
+        flex-direction:column;
+        gap:1rem;
+        margin-top:1rem;
+        text-align:center;
+    }
+
+    /* Show menu after clicking */
+    #nav-menu.show{
+        display:flex;
+    }
+
+}
+
+/* ---------- AI Workflow ---------- */
+
+.workflow {
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:0.8rem;
+
+}
+
+
+.workflow-step {
+
+    background:#eff6ff;
+    color:var(--primary);
+    padding:0.6rem 1rem;
+    border-radius:8px;
+    font-weight:600;
+    font-size:0.9rem;
+    text-align:center;
+
+}
+
+
+.workflow-arrow {
+
+    color:var(--text-light);
+    font-size:1.4rem;
+    font-weight:bold;
+
+}
+
+
+@media(max-width:768px){
+
+    .workflow {
+
+        flex-direction:column;
+
+    }
+
+
+    .workflow-arrow {
+
+        transform:rotate(90deg);
+
+    }
+
+}
+
+/* ---------- Articles ---------- */
+
+.article-image {
+
+    width:100%;
+    max-width:900px;
+    margin:2rem auto;
+    display:block;
+    border-radius:12px;
+
+}
+
+
+article {
+
+    max-width:850px;
+    margin:auto;
+
+}
+
+
+article h2 {
+
+    margin-top:3rem;
+
+}
+
+
+article li {
+
+    margin-bottom:0.8rem;
+
+}
+
+
+
+
+
+/* ---------- Logo ---------- */
+.project-logo{
+
+    width:180px;
+    height:180px;
+
+    display:block;
+    margin:0 auto 1.5rem;
+
+    object-fit:cover;
+
+    border-radius:18px;
+
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+
+}

@@ -1,0 +1,449 @@
+/* =====================================================
+   Guillermo Ramajo Fernández
+   Research CV Styling
+
+   Scientific · Minimal · ATS Friendly
+===================================================== */
+
+
+/* ---------- Variables ---------- */
+
+:root {
+
+    --text: #111827;
+    --secondary: #4b5563;
+    --accent: #2563eb;
+    --border: #d1d5db;
+
+    --page-width: 850px;
+
+}
+
+
+/* ---------- Reset ---------- */
+
+* {
+
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+
+}
+
+
+body {
+
+    font-family:
+
+        Inter,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
+    color: var(--text);
+
+    background: #ffffff;
+
+    line-height: 1.55;
+
+    font-size: 15px;
+
+}
+
+
+/* ---------- Main container ---------- */
+
+
+.cv-container {
+
+    width: min(100%, var(--page-width));
+
+    margin: auto;
+
+    padding: 50px 60px;
+
+}
+
+
+
+/* ---------- Header ---------- */
+
+
+.cv-header {
+
+    text-align: center;
+
+    padding-bottom: 30px;
+
+    border-bottom: 2px solid var(--text);
+
+}
+
+
+.cv-header h1 {
+
+    font-size: 34px;
+
+    letter-spacing: -0.5px;
+
+    margin-bottom: 6px;
+
+}
+
+
+
+.cv-header h2 {
+
+    font-size: 20px;
+
+    font-weight: 500;
+
+    color: var(--accent);
+
+    margin-bottom: 14px;
+
+}
+
+
+
+.tagline {
+
+    font-size: 16px;
+
+    max-width: 650px;
+
+    margin: auto;
+
+    color: var(--secondary);
+
+}
+
+
+
+.links {
+
+    margin: 18px 0;
+
+    font-size: 14px;
+
+}
+
+
+
+.links a {
+
+    color: var(--accent);
+
+    text-decoration: none;
+
+}
+
+
+
+.links span {
+
+    margin: 0 6px;
+
+    color: var(--secondary);
+
+}
+
+
+
+
+
+/* ---------- Sections ---------- */
+
+
+section {
+
+    margin-top: 32px;
+
+}
+
+
+section h3 {
+
+    font-size: 18px;
+
+    text-transform: uppercase;
+
+    letter-spacing: .08em;
+
+    border-bottom: 1px solid var(--border);
+
+    padding-bottom: 6px;
+
+    margin-bottom: 14px;
+
+}
+
+
+
+
+p {
+
+    color: var(--secondary);
+
+    margin-bottom: 10px;
+
+}
+
+
+
+
+/* ---------- Experience / Education ---------- */
+
+
+.entry {
+
+    margin-bottom: 24px;
+
+}
+
+
+
+.entry h4 {
+
+    font-size: 16px;
+
+    margin-bottom: 3px;
+
+}
+
+
+
+.meta {
+
+    color: var(--secondary);
+
+    font-size: 14px;
+
+    margin-bottom: 8px;
+
+}
+
+
+
+ul {
+
+    padding-left: 20px;
+
+}
+
+
+
+li {
+
+    margin-bottom: 7px;
+
+    color: var(--secondary);
+
+}
+
+
+
+li::marker {
+
+    color: var(--accent);
+
+}
+
+
+
+/* ---------- Tags ---------- */
+
+
+.skills {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+}
+
+
+
+.skills span {
+
+    border: 1px solid #bfdbfe;
+
+    color: var(--accent);
+
+    padding: 5px 12px;
+
+    border-radius: 20px;
+
+    font-size: 13px;
+
+    font-weight: 500;
+
+}
+
+
+
+
+/* ---------- Publications ---------- */
+
+
+.publication {
+
+    margin-bottom: 18px;
+
+}
+
+
+
+.publication strong {
+
+    font-size: 15px;
+
+}
+
+
+
+.publication p {
+
+    font-size: 14px;
+
+    margin-top: 4px;
+
+}
+
+
+
+
+
+/* ---------- Technical Skills Grid ---------- */
+
+
+.technical-grid {
+
+    display:grid;
+
+    grid-template-columns: repeat(2,1fr);
+
+    gap:20px;
+
+}
+
+
+
+.technical-grid strong {
+
+    display:block;
+
+    margin-bottom:4px;
+
+}
+
+
+
+
+
+/* ---------- Links ---------- */
+
+
+a {
+
+    color: var(--accent);
+
+}
+
+
+
+/* =====================================================
+   Print Styling
+===================================================== */
+
+
+@media print {
+
+
+    body {
+
+        font-size: 11pt;
+
+    }
+
+
+    .cv-container {
+
+        width:100%;
+
+        padding: 35px 45px;
+
+    }
+
+
+
+    a {
+
+        color:black;
+
+        text-decoration:none;
+
+    }
+
+
+
+    section {
+
+        break-inside: avoid;
+
+    }
+
+
+
+    .entry {
+
+        break-inside: avoid;
+
+    }
+
+
+}
+
+
+
+
+
+/* =====================================================
+   Mobile
+===================================================== */
+
+
+@media(max-width:700px){
+
+
+    .cv-container {
+
+        padding:30px 20px;
+
+    }
+
+
+    .cv-header h1 {
+
+        font-size:28px;
+
+    }
+
+
+    .technical-grid {
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .links {
+
+        line-height:2;
+
+    }
+
+
+}
