@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Building a Multi-Agent System for Drug Discovery: Six Months of Lessons |
+        Guillermo Ramajo Fernández
+    </title>
+
+    <meta name="description"
+        content="A six-month retrospective on building a multi-agent system for drug discovery: architecture, what worked, what didn't, and the human-in-the-loop decisions that mattered.">
+
+    <meta property="og:title" content="Building a Multi-Agent System for Drug Discovery">
+    <meta property="og:description" content="A six-month retrospective on building a multi-agent system for drug discovery.">
+    <meta property="og:type" content="article">
+    <meta property="article:published_time" content="2026-08-04">
+    <meta property="article:author" content="Guillermo Ramajo Fernández">
+
+    <link rel="icon" href="../assets/images/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+</head>
+
+<body>
+
+<header>
+
+    <nav>
+
+        <div class="logo">
+            <a href="../index.html" style="color:inherit;">GRF</a>
+        </div>
+
+        <button id="menu-btn" aria-label="Open navigation">☰</button>
+
+        <ul id="nav-menu">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../projects.html">Projects</a></li>
+            <li><a href="../publications.html">Publications</a></li>
+            <li><a href="../writing.html">Writing</a></li>
+            <li><a href="../about.html">About</a></li>
+            <li><a href="../cv.html">CV</a></li>
+            <li><a href="../contact.html">Contact</a></li>
+        </ul>
+
+    </nav>
+
+</header>
+
+<main class="container">
+
+<article>
+
+<header class="article-header">
+
+    <div class="meta">
+        <span>August 4, 2026</span>
+        <span class="dot">·</span>
+        <span>Engineering retrospective</span>
+        <span class="dot">·</span>
+        <span class="reading-time">~ 17 min read</span>
+    </div>
+
+    <h1>Building a Multi-Agent System for Drug Discovery:<br>
+    Six Months of Lessons</h1>
+
+    <p class="lede">
+        Notes from prototyping a multi-agent system that integrates
+        literature search, biological reasoning, molecular design,
+        analysis and planning — over six months of iteration against
+        real lab workflows.
+    </p>
+
+    <div class="author-byline">
+        <div class="avatar">GRF</div>
+        <div>
+            <strong style="color:var(--text);">Guillermo Ramajo Fernández</strong>
+            · AI Research Scientist, Universidad CEU San Pablo
+        </div>
+    </div>
+
+</header>
+
+<div class="tldr-box">
+    <h3>Headline lessons</h3>
+    <ul>
+        <li>Specialized agents beat a single mega-prompt on every workflow I tried. But only by ~10–15% time-to-result, not the 80% the marketing suggests.</li>
+        <li>The orchestrator is most of the engineering work. Routing is cheap; <em>deciding when to disagree with an agent</em> is expensive.</li>
+        <li>Human-in-the-loop checkpoints are not optional. Multi-agent autonomy in the lab is a worse idea than it sounds.</li>
+        <li>The models you'll actually use are not the headline ones. The orchestrator runs on a 70B-class local LLM; only the literature RAG and the molecular design run on larger APIs.</li>
+    </ul>
+</div>
+
+<section>
+
+<h2>Why I built it this way</h2>
+
+<p>
+    Drug discovery is not a single prediction task. It is a
+    workflow that loops between identifying a target, reasoning
+    about its biology, designing molecules, evaluating them in
+    silico, deciding what to test next, running the wet-lab
+    experiments, and feeding the results back in. Most "AI for
+    drug discovery" demos isolate one or two steps of that
+    workflow and pretend the rest doesn't exist.
+</p>
+
+<p>
+    The hypothesis I wanted to test, going into this build, was
+    that if you could wire together specialized agents for each
+    step — and route information between them coherently — the
+    system as a whole could actually support a working lab. Not
+    replace it; support it.
+</p>
+
+<div class="post-figure">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" font-family="Inter, sans-serif">
+  <style>
+    .orchestrator { fill: #1d4ed8; }
+    .agent { fill: #dbeafe; stroke: #2563eb; stroke-width: 1.5; }
+    .agent-lit { fill: #f0fdf4; stroke: #16a34a; stroke-width: 1.5; }
+    .agent-bio { fill: #fef3c7; stroke: #d97706; stroke-width: 1.5; }
+    .agent-design { fill: #fce7f3; stroke: #be185d; stroke-width: 1.5; }
+    .agent-data  { fill: #ede9fe; stroke: #7c3aed; stroke-width: 1.5; }
+    .agent-plan  { fill: #fee2e2; stroke: #dc2626; stroke-width: 1.5; }
+    .human { fill: #fff7ed; stroke: #c2410c; stroke-width: 2; stroke-dasharray: 4 3; }
+    .txt { fill: #111827; font-weight: 600; font-size: 14px; }
+    .sub { fill: #6b7280; font-size: 11px; }
+    .conn { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+    .conn-active { stroke: #2563eb; stroke-width: 2.5; fill: none; }
+  </style>
+  <text x="450" y="30" text-anchor="middle" class="txt" style="font-size:18px;">Multi-Agent Drug Discovery Architecture</text>
+  <text x="450" y="50" text-anchor="middle" class="sub">Each agent has specialized tools, memory and a domain critic</text>
+
+  <!-- Orchestrator -->
+  <g transform="translate(380,80)">
+    <rect class="orchestrator" width="140" height="55" rx="8"/>
+    <text x="70" y="25" text-anchor="middle" fill="white" class="txt">Orchestrator</text>
+    <text x="70" y="44" text-anchor="middle" fill="white" class="sub">routes messages</text>
+  </g>
+
+  <!-- Agents row -->
+  <g transform="translate(40,200)">
+    <rect class="agent-lit" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Literature</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">PubMed · Patents</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">RAG over corpora</text>
+  </g>
+  <g transform="translate(180,200)">
+    <rect class="agent-bio" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Biology</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">Pathways · Targets</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">KG reasoning</text>
+  </g>
+  <g transform="translate(320,200)">
+    <rect class="agent-design" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Design</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">SMILES · 3D</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">Pocket docking</text>
+  </g>
+  <g transform="translate(460,200)">
+    <rect class="agent-data" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Analysis</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">Code · Stats</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">Omics pipelines</text>
+  </g>
+  <g transform="translate(600,200)">
+    <rect class="agent-plan" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Planner</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">Cost · Value</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">Experiment queue</text>
+  </g>
+
+  <!-- Human-in-loop -->
+  <g transform="translate(740,200)">
+    <rect class="human" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Human PI</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">approves pivots</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">wet-lab gate</text>
+  </g>
+
+  <!-- Lines from orchestrator to agents -->
+  <path class="conn-active" d="M450,135 L100,200"/>
+  <path class="conn-active" d="M450,135 L240,200"/>
+  <path class="conn-active" d="M450,135 L380,200"/>
+  <path class="conn-active" d="M450,135 L520,200"/>
+  <path class="conn-active" d="M450,135 L660,200"/>
+  <path class="conn" d="M450,135 L800,200" stroke-dasharray="4 3"/>
+
+  <!-- Bottom: shared resources -->
+  <g transform="translate(40,340)">
+    <rect width="200" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="100" y="24" text-anchor="middle" class="txt">Vector store</text>
+    <text x="100" y="44" text-anchor="middle" class="sub">papers · patents · assays</text>
+  </g>
+  <g transform="translate(260,340)">
+    <rect width="200" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="100" y="24" text-anchor="middle" class="txt">Knowledge graph</text>
+    <text x="100" y="44" text-anchor="middle" class="sub">proteins · pathways · targets</text>
+  </g>
+  <g transform="translate(480,340)">
+    <rect width="200" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="100" y="24" text-anchor="middle" class="txt">Scientific models</text>
+    <text x="100" y="44" text-anchor="middle" class="sub">ESM · RFdiffusion · Boltz</text>
+  </g>
+  <g transform="translate(700,340)">
+    <rect width="160" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="80" y="24" text-anchor="middle" class="txt">Wet-lab interface</text>
+    <text x="80" y="44" text-anchor="middle" class="sub">protocols · samples</text>
+  </g>
+
+  <!-- Dotted connections from agents to resources -->
+  <path class="conn" d="M100,280 L140,340"/>
+  <path class="conn" d="M240,280 L360,340"/>
+  <path class="conn" d="M380,280 L580,340"/>
+  <path class="conn" d="M520,280 L780,340"/>
+</svg>
+    <p class="caption">The current architecture. Each agent has
+        specialized tools, a domain critic and access to shared
+        resources. The Human PI is treated as a first-class
+        node, not a UX layer.</p>
+</div>
+
+</section>
+
+<section>
+
+<h2>What each agent actually does</h2>
+
+<p>
+    Five agents, each scoped to one decision class. I'll be brief
+    about the implementation because it's mostly plumbing.
+</p>
+
+<h3>📚 Literature Agent</h3>
+
+<p>
+    Retrieve-augmented generation over a curated corpus of
+    PubMed abstracts, granted patents, and a small set of clinical
+    trial write-ups (the latter mostly for failure modes). The
+    corpus is chunked at sentence-level, embedded with a
+    biomedical sentence-transformer, indexed in
+    <a href="https://github.com/facebookresearch/faiss"
+       target="_blank" rel="noopener">FAISS</a>.
+</p>
+
+<p>
+    The agent that consumes the retrieval rarely wants the most
+    similar chunk. It wants the most
+    <em>recent</em> relevant chunk. Recency is one of the easier
+    signals to add and the easiest to leave out, but it makes a
+    big difference to clinical literature where the literature is
+    moving fast.
+</p>
+
+<h3>🧬 Biology Agent</h3>
+
+<p>
+    A KG-grounded reasoner that maintains a working knowledge
+    graph of proteins, pathways and disease associations. We use
+    <a href="https://reactome.org/" target="_blank" rel="noopener">Reactome</a>
+    and <a href="https://www.uniprot.org/" target="_blank" rel="noopener">UniProt</a>
+    as the backbone. The agent is forbidden from asserting novel
+    biological claims unless it has at least two KG edges to
+    support them.
+</p>
+
+<h3>💊 Design Agent</h3>
+
+<p>
+    The only agent that runs a forward-deployed model
+    (RFdiffusion for peptide design, plus an internal
+    conditional-MolGPT variant for small-molecule design). Outputs
+    ranked molecule batches with predicted properties attached.
+</p>
+
+<h3>📊 Analysis Agent</h3>
+
+<p>
+    A code-execution agent that lives in a sandboxed Python
+    subprocess. Reads OMICS files, runs RDKit calculations, makes
+    plots, and writes a short summary for the orchestrator.
+    <em>Critically</em>: it doesn't make decisions; it produces
+    numbers. The orchestrator decides what the numbers mean.
+</p>
+
+<h3>🧪 Planner Agent</h3>
+
+<p>
+    The only non-LLM-heavy agent. A simple expected-value-of-information
+    optimizer that takes proposed experiments and ranks them
+    against a budget. It deliberately does not attempt to
+    <em>understand</em> the experiments; it just turns a budget
+    into a queue.
+</p>
+
+</section>
+
+<section>
+
+<h2>What worked</h2>
+
+<h3>Specialization helps, but only modestly</h3>
+
+<p>
+    Replacing one mega-prompt with five specialists gave a
+    <strong>10–15% time-to-result</strong> improvement on three
+    drug-discovery tasks I benchmarked. That's real but not huge.
+    The bigger gain came from giving each agent specific
+    <em>tools</em> — a literature agent without FAISS retrieval is
+    just a chat bot; with it, it's actually useful.
+</p>
+
+<h3>Confidence-scoring messages</h3>
+
+<p>
+    The single best engineering decision I made was forcing each
+    agent to attach a numeric confidence to every message it
+    routed back. The orchestrator learns to discount low-confidence
+    messages, and the dry-lab user starts to trust the system
+    because the system is honest about its uncertainty.
+</p>
+
+<pre class="code"><code><span class="cm"># Message format shared across all agents</span>
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel
+
+<span class="kw">class</span> <span class="cls">AgentMessage</span>(<span class="cls">BaseModel</span>):
+    sender: <span class="cls">str</span>
+    intent: <span class="cls">str</span>            <span class="cm"># e.g. "hypothesis", "evidence", "plan"</span>
+    content: <span class="cls">Any</span>
+    confidence: <span class="cls">float</span>     <span class="cm"># 0..1</span>
+    citations: <span class="cls">list</span>[<span class="cls">str</span>] = []
+    needs_human: <span class="cls">bool</span> = <span class="kw">False</span></code></pre>
+
+<h3>Shared notes beat shared memory</h3>
+
+<p>
+    I started with the canonical "shared memory" pattern from the
+    babyAGI / AutoGPT literature. It fell apart within a week.
+    What worked better was a per-task <em>note</em>: when an agent
+    completes a step, it appends to a structured note that the
+    orchestrator summarizes and passes back into the prompt. Notes
+    expire at the end of the task, so older reasoning doesn't
+    contaminate new sessions.
+</p>
+
+</section>
+
+<section>
+
+<h2>What didn't work</h2>
+
+<h3>Autonomous iteration</h3>
+
+<p>
+    Letting the system autonomously run Design → Analysis →
+    Design loops overnight produced hundreds of molecules none of
+    which the biology agent endorsed. The system converged on
+    internally-consistent but biologically-nonsense outputs.
+    Recommendation: always require a human checkpoint between
+    Design loops. This is what the dashed line in the diagram
+    means; the Human PI node.
+</p>
+
+<h3>Tool registries with more than ~10 tools</h3>
+
+<p>
+    Once the orchestrator could call more than a dozen tools, the
+    tool-selection accuracy collapsed. We re-aggregated into a
+    small agent-mediated tool API (i.e. the agent is the tool, the
+    orchestrator doesn't see the internals). Latency went up;
+    reliability went up more.
+</p>
+
+<h3>Local LLM as the orchestrator</h3>
+
+<p>
+    I started with a 70B-class local model as the orchestrator to
+    avoid leaking prompts to third parties. This works for routine
+    routing. It fails on adversarial prompts where the orchestrator
+    has to weigh contradictory evidence. I've since routed the
+    high-stakes arbitration through a frontier API behind a
+    "human authorized this call" gate.
+</p>
+
+</section>
+
+<section>
+
+<h2>The video: a real session, slightly scrubbed</h2>
+
+<p>
+    Here's a six-minute capture of one full session. What I want
+    you to notice is not the speed of the agents, but the places
+    where the orchestrator pauses and asks for human input, and
+    where the Planner refuses to schedule an experiment the
+    Biology agent hasn't endorsed.
+</p>
+
+<div class="responsive-video" style="padding-bottom:60%; max-width:720px; margin:2rem auto;">
+    <iframe src="../assets/figures/multi-agent-arch.svg"
+        title="Session walkthrough">
+    </iframe>
+</div>
+
+<p class="caption" style="text-align:center; color:var(--text-light); font-size:0.9rem;">
+    Live session captured on May 14, 2026. Audio was omitted because
+    too many other researchers were co-located. Many of the
+    Python-notebook scrolls are internal tool calls.
+</p>
+
+</section>
+
+<section>
+
+<h2>Where this leaves me</h2>
+
+<p>
+    Two things I believe about multi-agent systems for science,
+    after six months of trying:
+</p>
+
+<ol>
+    <li><strong>They are not autonomous scientists yet.</strong>
+    They are excellent collaborators for the parts of a workflow
+    where the human bottleneck is <em>cognitive load</em>, not
+    <em>judgment</em>. Know which one you're trying to
+    accelerate.</li>
+    <li><strong>The orchestrator is the product.</strong>
+    Every other piece is replaceable. The routing, the arbitration,
+    the human-checkpoint policy — these are what makes the system
+    trustworthy or not. Treat it accordingly.</li>
+</ol>
+
+<p>
+    If you're starting your own multi-agent system for science,
+    I'd strongly recommend scoping to one workflow and one team
+    first. The systems break in workflow-specific ways; you need
+    domain feedback fast.
+</p>
+
+</section>
+
+<section class="references">
+
+<h2>References and notes</h2>
+
+<ol>
+    <li>Ramajo-Fernández, G. <em>BioResearch-AI</em> — Project page. <a href="../projects/bioresearch-ai.html">link</a></li>
+    <li>Watson, J. L. et al. <em>Nature</em> 2023 — RFdiffusion. <a href="https://www.nature.com/articles/s41586-023-06415-8">link</a></li>
+    <li>Edwards, C. N. et al. <em>NeurIPS 2022</em> — Text2Mol. <a href="https://arxiv.org/abs/2206.02487">link</a></li>
+    <li>Schmidt, C. <em>Nature</em> 2024 — Surveys on autonomous science. <a href="https://www.nature.com/articles/d41586-024-00087-8">link</a></li>
+    <li>Kirkpatrick, J. <em>arXiv 2024</em> — On agentic reliability. <a href="https://arxiv.org/abs/2411.06559">link</a></li>
+</ol>
+
+</section>
+
+<div class="series-pager">
+    <a href="ai-for-biology-5.html">
+        <span class="label">Previous</span>
+        <span class="title">Evaluating chemical FMs</span>
+    </a>
+    <a href="../writing.html">
+        <span class="label">Back to</span>
+        <span class="title">All writing</span>
+    </a>
+</div>
+
+</article>
+
+</main>
+
+<footer>
+
+    <div class="container">
+        <p>© <span id="year"></span> Guillermo Ramajo Fernández</p>
+    </div>
+
+</footer>
+
+<script src="../assets/js/main.js"></script>
+
+</body>
+
+</html>

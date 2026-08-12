@@ -3,613 +3,234 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>
-AI for Biology #1 | From LLMs to Agentic AI | Guillermo Ramajo Fernández
-</title>
+    <title>
+        Why I Started Writing About AI and Biology |
+        Guillermo Ramajo Fernández
+    </title>
 
+    <meta name="description"
+        content="A short note on why I'm starting to publish technical writing about foundation models, self-supervised learning and computational biology after years of heads-down research.">
 
-<meta name="description"
-content="Exploring how agentic AI systems could transform biomedical research by combining language models, scientific tools and autonomous workflows.">
+    <meta property="og:title" content="Why I Started Writing About AI and Biology">
+    <meta property="og:description" content="A short note on why I'm starting to publish technical writing about foundation models, self-supervised learning and computational biology after years of heads-down research.">
+    <meta property="og:type" content="article">
+    <meta property="article:published_time" content="2024-10-12">
+    <meta property="article:author" content="Guillermo Ramajo Fernández">
 
+    <link rel="icon" href="../assets/images/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
 
-<link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
 </head>
 
-
 <body>
-
 
 <header>
 
-<nav>
+    <nav>
 
-<div class="logo">
-GRF
-</div>
+        <div class="logo">
+            <a href="../index.html" style="color:inherit;">GRF</a>
+        </div>
 
+        <button id="menu-btn" aria-label="Open navigation">☰</button>
 
-<ul>
+        <ul id="nav-menu">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../projects.html">Projects</a></li>
+            <li><a href="../publications.html">Publications</a></li>
+            <li><a href="../writing.html">Writing</a></li>
+            <li><a href="../about.html">About</a></li>
+            <li><a href="../cv.html">CV</a></li>
+            <li><a href="../contact.html">Contact</a></li>
+        </ul>
 
-
-<li>
-<a href="../index.html">
-Home
-</a>
-</li>
-
-
-<li>
-<a href="../projects.html">
-Projects
-</a>
-</li>
-
-
-<li>
-<a href="../publications.html">
-Publications
-</a>
-</li>
-
-
-<li>
-<a href="../writing.html">
-Writing
-</a>
-</li>
-
-
-<li>
-<a href="../about.html">
-About
-</a>
-</li>
-
-
-<li>
-<a href="../cv.html">
-CV
-</a>
-</li>
-
-
-<li>
-<a href="../contact.html">
-Contact
-</a>
-</li>
-
-
-</ul>
-
-
-</nav>
+    </nav>
 
 </header>
 
-
-
-
-
 <main class="container">
-
-
 
 <article>
 
+<header class="article-header">
 
+    <div class="meta">
+        <span>October 12, 2024</span>
+        <span class="dot">·</span>
+        <span>Notes</span>
+        <span class="dot">·</span>
+        <span class="reading-time">~ 4 min read</span>
+    </div>
 
-<section class="hero">
+    <h1>Why I Started Writing About AI and Biology</h1>
 
+    <p class="lede">
+        A short note on why I'm starting to publish technical writing about
+        foundation models, self-supervised learning and computational
+        biology — after several years of heads-down research.
+    </p>
 
-<h1>
-AI for Biology #1:
-<br>
-From LLMs to Agentic AI
-</h1>
+    <div class="author-byline">
+        <div class="avatar">GRF</div>
+        <div>
+            <strong style="color:var(--text);">Guillermo Ramajo Fernández</strong>
+            · AI Research Scientist, Universidad CEU San Pablo
+        </div>
+    </div>
 
+</header>
 
-<p>
-
-How scientific AI systems could evolve from answering questions
-to actively supporting the research process.
-
-</p>
-
-
-<p>
-
-July 2026 · Agentic AI · Computational Biology · Drug Discovery
-
-</p>
-
-
-</section>
-
-
-
-
-
-<img
-src="../assets/images/ai-for-biology-1.png"
-alt="AI for Biology #1 From LLMs to Agentic AI"
-class="article-image"
->
-
-
-
-
-
-
+<div class="tldr-box">
+    <h3>In short</h3>
+    <ul>
+        <li>I've spent the last few years building ML systems for biology without writing anything public about the process.</li>
+        <li>Starting this series to share the parts of the work that don't fit in a paper: failed experiments, design choices, framing.</li>
+        <li>Posts will be AI-for-biology only, written for working researchers and engineers — not science journalism.</li>
+    </ul>
+</div>
 
 <section>
 
-
-<h2>
-Beyond the LLM
-</h2>
-
+<h2>The usual reason, said honestly</h2>
 
 <p>
-
-Large language models have demonstrated remarkable abilities in
-understanding and generating human language. They can summarize
-papers, answer questions, write code and assist researchers in
-many different tasks.
-
+    The honest reason is that I've been accumulating notes. After a PhD in
+    physics, a master's in synthetic biology at the CSIC, a few years
+    teaching CS and now a PhD in AI, I have a folder of observations about
+    how machine learning actually behaves when you hand it molecular data
+    instead of ImageNet — and most of those observations never make it into
+    a paper.
 </p>
-
 
 <p>
-
-However, the most interesting question is not only:
-
+    Some of them are embarrassingly small. Things like: <em>don't trust the
+    validation MSE on a token-level chemistry model until you've checked
+    what it predicts for octanol</em>. Some of them are less obvious: that
+    the gap between self-supervised pretraining on SMILES and a useful
+    molecular property predictor is much wider than the leaderboards
+    suggest, because the leaderboards reward settings that don't transfer
+    cleanly to a wet-lab pipeline.
 </p>
-
-
-<div class="card">
-
 
 <p>
-
-"What happens when language models become larger?"
-
+    None of those by themselves is a publication. Together, they're the
+    part of the job I actually want to read about other people's work, and
+    rarely do.
 </p>
-
-
-</div>
-
-
-<p>
-
-The more interesting question is:
-
-</p>
-
-
-<div class="card">
-
-
-<p>
-
-"What happens when a language model becomes part of an intelligent
-system capable of interacting with scientific tools and workflows?"
-
-</p>
-
-
-</div>
-
-
 
 </section>
 
+<section>
 
+<h2>What this series is, and what it isn't</h2>
 
+<p>
+    This series is for working researchers and ML engineers who have to
+    actually deploy models, not just benchmark them. The default length
+    will be short — between five and fifteen minutes of reading — and the
+    default tone will be direct. I'll try to make the posts standalone
+    enough that you can read them in any order, with a short list of
+    references at the bottom of each one.
+</p>
 
+<p>
+    It is <strong>not</strong> a survey of the field. I've read
+    <a href="https://arxiv.org/abs/2202.07159" target="_blank" rel="noopener">Cheng
+    et al.'s review of molecular representation learning</a> probably a
+    dozen times and I still can't quote it from memory. The literature is
+    deep and well-reviewed elsewhere; the gap I want to fill is the
+    pragmatic one.
+</p>
 
+<div class="callout">
+    <p><strong>Fair warning.</strong> My first language is Spanish, and
+    grammar is not my strongest skill in English either. If you spot
+    something sloppy in one of these posts, I'd rather you tell me than
+    let it linger. The posts will get better over the year.</p>
+</div>
 
-
+</section>
 
 <section>
 
-
-<h2>
-From Models to Scientific Agents
-</h2>
-
-
+<h2>Where to start</h2>
 
 <p>
-
-A researcher does not usually solve a problem by asking a single
-question and receiving a final answer.
-
-Scientific discovery is an iterative process involving:
-
+    If you're new here, the most useful entry points are probably:
 </p>
-
-
 
 <ul>
-
-
-<li>
-Reading and understanding previous research
-</li>
-
-
-<li>
-Designing computational experiments
-</li>
-
-
-<li>
-Analyzing biological datasets
-</li>
-
-
-<li>
-Interpreting results
-</li>
-
-
-<li>
-Generating new hypotheses
-</li>
-
-
-<li>
-Planning the next experiment
-</li>
-
-
+    <li><a href="ai-for-biology-2.html">Predicting Collision Cross-Sections:
+        What I Learned From 61,863 Molecules</a> — the closest thing to a
+        proper technical writeup of work I co-authored; goes deep on data,
+        baselines and the gotchas of <em>CCS</em> prediction.</li>
+    <li><a href="ai-for-biology-3.html">Self-Supervised Transfer Learning
+        for Collision Cross-Section Prediction</a> — same domain, but
+        showing why pretraining on unlabeled molecules buys you
+        cross-dataset generalization.</li>
+    <li><a href="ai-for-biology-5.html">Evaluating Chemical Foundation
+        Models for Metabolite Property Prediction</a> — a research note
+        on the trap that any future foundation-model-for-chemistry paper
+        needs to address.</li>
 </ul>
 
-
-
-
-<p>
-
-An agentic AI system aims to support this workflow by connecting
-different capabilities into a coordinated process.
-
-</p>
-
-
 </section>
-
-
-
-
-
-
-
 
 <section>
 
-
-<h2>
-A Scientific Research Assistant
-</h2>
-
+<h2>A note on cadence</h2>
 
 <p>
-
-Imagine an AI assistant capable of:
-
+    I'll post about once every two or three months, not weekly. Each post
+    will be something I'd genuinely want to read, written mostly on
+    weekends and evenings. If I post more often, something has gone wrong
+    and I should be in the lab instead.
 </p>
-
-
-
-<div class="card">
-
-
-<ul>
-
-
-<li>
-🧬 Searching and analyzing scientific literature about a target protein
-</li>
-
-
-<li>
-📊 Processing and interpreting omics datasets
-</li>
-
-
-<li>
-🐍 Writing and executing Python analysis workflows
-</li>
-
-
-<li>
-📈 Evaluating results and identifying patterns
-</li>
-
-
-<li>
-🔄 Deciding which analysis should be performed next
-</li>
-
-
-<li>
-📚 Returning to the literature when uncertainty remains
-</li>
-
-
-</ul>
-
-
-</div>
-
-
-
 
 <p>
-
-None of these individual capabilities are completely new.
-
-The important innovation comes from connecting them into a system
-that can support complex scientific reasoning.
-
+    If any of this is useful to your own work, leave a comment on the
+    relevant paper, or drop me a line through the
+    <a href="../contact.html">contact page</a>. I'd love to hear what
+    you're building.
 </p>
-
-
 
 </section>
 
-
-
-
-
-
-
-
-<section>
-
-
-<h2>
-Why This Matters for Biology
-</h2>
-
-
-<p>
-
-Modern biology is producing increasingly large amounts of data:
-genomic sequences, protein structures, microscopy images,
-molecular measurements and scientific publications.
-
-</p>
-
-
-
-<p>
-
-The challenge is no longer only generating data.
-
-The challenge is navigating the enormous number of reasoning steps
-between a biological hypothesis and a validated discovery.
-
-</p>
-
-
-
-<p>
-
-In areas such as synthetic biology and drug discovery, AI systems
-that can help researchers explore this complexity could become
-powerful scientific collaborators.
-
-</p>
-
-
-
-</section>
-
-
-
-
-
-
-
-
-<section>
-
-
-<h2>
-The Future of AI for Life Sciences
-</h2>
-
-
-<p>
-
-I believe the next generation of AI for biology will not be defined
-by a single increasingly capable model.
-
-</p>
-
-
-
-<p>
-
-Instead, it will emerge from ecosystems of specialized agents
-working together:
-
-</p>
-
-
-
-<div class="card workflow">
-
-
-<div class="workflow-step">
-Literature Agent
+<div class="series-pager">
+    <a href="../writing.html" style="text-align:center;">
+        <span class="label">Back to</span>
+        <span class="title">All writing</span>
+    </a>
+    <a href="ai-for-biology-2.html">
+        <span class="label">Next in series</span>
+        <span class="title">Predicting Collision Cross-Sections</span>
+    </a>
 </div>
-
-
-<div class="workflow-step">
-Data Analysis Agent
-</div>
-
-
-<div class="workflow-step">
-Coding Agent
-</div>
-
-
-<div class="workflow-step">
-Reasoning Agent
-</div>
-
-
-<div class="workflow-step">
-Scientific Assistant
-</div>
-
-
-</div>
-
-
-
-<p>
-
-The goal is not replacing scientists.
-
-The goal is extending human scientific capability.
-
-</p>
-
-
-</section>
-
-
-
-
-
-
-
-
-<section>
-
-
-<h2>
-Final Thoughts
-</h2>
-
-
-<p>
-
-Building better models remains essential.
-
-But building better systems around those models may become
-equally important.
-
-</p>
-
-
-
-<p>
-
-The future of scientific AI may not be a single artificial
-intelligence solving biology.
-
-It may be a collaboration between humans and networks of
-specialized AI agents accelerating discovery.
-
-</p>
-
-
-
-</section>
-
-
-
-
-
-
-
-<section>
-
-
-<h2>
-Related Work
-</h2>
-
-
-
-<div class="card">
-
-
-<ul>
-
-
-<li>
-<a href="../projects.html">
-BioResearch-AI: Agentic AI platform for biomedical research
-</a>
-</li>
-
-
-<li>
-<a href="../publications.html">
-Research on machine learning for computational biology
-</a>
-</li>
-
-
-</ul>
-
-
-</div>
-
-
-</section>
-
-
-
-
 
 </article>
 
-
 </main>
-
-
-
-
-
-
 
 <footer>
 
-<div class="container">
+    <div class="container">
 
-<p>
-© <span id="year"></span>
-Guillermo Ramajo Fernández
-</p>
+        <p>© <span id="year"></span> Guillermo Ramajo Fernández</p>
 
-</div>
+    </div>
 
 </footer>
 
-
-
 <script src="../assets/js/main.js"></script>
-
 
 </body>
 

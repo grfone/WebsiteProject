@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        What Protein Language Models Have Taught Me in a Year of Using Them |
+        Guillermo Ramajo Fernández
+    </title>
+
+    <meta name="description"
+        content="A working researcher's retrospective on ESM-2, ESMFold, AlphaFold 3, ESM-3 and Boltz: which ones shipped into our pipeline, which didn't, and what surprised me.">
+
+    <meta property="og:title" content="What Protein Language Models Have Taught Me">
+    <meta property="og:description" content="A working researcher's retrospective on ESM-2, ESMFold, AlphaFold 3, ESM-3 and Boltz.">
+    <meta property="og:type" content="article">
+    <meta property="article:published_time" content="2026-01-21">
+    <meta property="article:author" content="Guillermo Ramajo Fernández">
+
+    <link rel="icon" href="../assets/images/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+</head>
+
+<body>
+
+<header>
+
+    <nav>
+
+        <div class="logo">
+            <a href="../index.html" style="color:inherit;">GRF</a>
+        </div>
+
+        <button id="menu-btn" aria-label="Open navigation">☰</button>
+
+        <ul id="nav-menu">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../projects.html">Projects</a></li>
+            <li><a href="../publications.html">Publications</a></li>
+            <li><a href="../writing.html">Writing</a></li>
+            <li><a href="../about.html">About</a></li>
+            <li><a href="../cv.html">CV</a></li>
+            <li><a href="../contact.html">Contact</a></li>
+        </ul>
+
+    </nav>
+
+</header>
+
+<main class="container">
+
+<article>
+
+<header class="article-header">
+
+    <div class="meta">
+        <span>January 21, 2026</span>
+        <span class="dot">·</span>
+        <span>Notes from the bench</span>
+        <span class="dot">·</span>
+        <span class="reading-time">~ 13 min read</span>
+    </div>
+
+    <h1>What Protein Language Models Have Taught Me in a Year of Using Them</h1>
+
+    <p class="lede">
+        A working researcher's retrospective on ESM-2, ESMFold, AlphaFold 3,
+        ESM-3 and Boltz. Which ones actually shipped into our pipeline,
+        which didn't, and what surprised me about the field.
+    </p>
+
+    <div class="author-byline">
+        <div class="avatar">GRF</div>
+        <div>
+            <strong style="color:var(--text);">Guillermo Ramajo Fernández</strong>
+            · AI Research Scientist, Universidad CEU San Pablo
+        </div>
+    </div>
+
+</header>
+
+<div class="tldr-box">
+    <h3>Five practical lessons</h3>
+    <ul>
+        <li>Zero-shot ESM-2 mutation-effect prediction is now routinely competitive with deep mutational scans — at one assay's worth of compute.</li>
+        <li>AlphaFold 3 / Boltz still beat ESMFold on most complexes, but ESMFold is dramatically faster and good enough for screening.</li>
+        <li>The tokenizer matters less than I expected. The dataset matters more.</li>
+        <li>Prompt-engineering tricks from LLMs transfer to PLMs. You didn't hear it from me.</li>
+        <li>Confidence scores from folding models are not well calibrated for out-of-distribution proteins.</li>
+    </ul>
+</div>
+
+<p class="post-figure" style="text-align:center;">
+    <img src="../assets/images/ai-for-biology-4.png"
+         alt="Protein language model landscape"
+         class="article-image" style="max-width:100%;">
+    <span class="caption">The protein LM landscape at the start of 2026.
+        Both encoder-only (ESM family) and structure-aware (AF3, Boltz)
+        models are now usable on commodity hardware for small proteins.</span>
+</p>
+
+<section>
+
+<h2>Quick history of how I got here</h2>
+
+<div class="post-figure">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" font-family="Inter, sans-serif">
+  <style>
+    .line { stroke: #94a3b8; stroke-width: 2; }
+    .pt { fill: #2563eb; }
+    .lbl { fill: #111827; font-weight: 600; font-size: 12px; }
+    .yr  { fill: #6b7280; font-size: 11px; }
+    .dot { fill: #c084fc; }
+  </style>
+  <text x="400" y="30" text-anchor="middle" style="font-weight:700; font-size:16px; fill:#111827;">A short history of protein language models</text>
+  <line class="line" x1="40" y1="120" x2="760" y2="120"/>
+  <g transform="translate(80,120)">
+    <circle r="6" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">ESM-1</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2020</text>
+  </g>
+  <g transform="translate(180,120)">
+    <circle r="8" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">ESM-1b / ESM-2</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2021–22</text>
+  </g>
+  <g transform="translate(300,120)">
+    <circle r="8" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">AlphaFold</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2021</text>
+  </g>
+  <g transform="translate(420,120)">
+    <circle r="9" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">RoseTTAFold</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2021</text>
+  </g>
+  <g transform="translate(540,120)">
+    <circle r="9" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">ESMFold</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2022</text>
+  </g>
+  <g transform="translate(660,120)">
+    <circle r="10" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">AlphaFold 3</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2024</text>
+  </g>
+  <g transform="translate(740,120)">
+    <circle r="11" fill="#7c3aed"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">ESM-3</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2024–25</text>
+  </g>
+</svg>
+    <p class="caption">Personal reading timeline, not a benchmark. Some
+        of these dates are model release; some are "the moment I
+        actually used it in a project".</p>
+</div>
+
+<p>
+    I started using protein language models in 2022, mostly out of
+    curiosity, as a waystation between molecular property prediction
+    and structure-conditioned featurization. By 2024 we had
+    <a href="https://www.biorxiv.org/content/10.1101/2024.10.22.619765v1"
+       target="_blank" rel="noopener">ESM-3</a> landing, and by mid-2025
+    every project I touched had at least one protein LM in the loop.
+    This post is a retrospective on that year.
+</p>
+
+</section>
+
+<section>
+
+<h2>What I expected vs. what I got</h2>
+
+<p>
+    Going into 2025 I expected two things from protein LMs:
+</p>
+
+<ol>
+    <li><strong>That they would mostly replace hand-engineered features</strong>
+    for protein-engineering tasks. Mostly true.</li>
+    <li><strong>That they would crush sequence-only structure predictors</strong>
+    like Rosetta and trRosetta. True, but not in the way I expected —
+    they didn't beat them, they removed them from the toolkit.</li>
+</ol>
+
+<p>
+    What I did <em>not</em> expect:
+</p>
+
+<ul>
+    <li>How catastrophic the inference-engineering gap turned out to
+    be. ESM-2 650M inference on a single H100 is one thing;
+    ESM-2 650M on a CPU is another thing entirely. We're 80% of our
+    time in <em>deployment</em>, not training.</li>
+    <li>That concatenated ESM-2 logits + a single linear head would
+    still beat fine-tuned ESM-2 on small downstream tasks. Less
+    surprising in hindsight, but I expected fine-tuning to win by
+    more than it did.</li>
+</ul>
+
+</section>
+
+<section>
+
+<h2>ESM-2 in production</h2>
+
+<p>
+    Our most-deployed model is still <a href="https://github.com/facebookresearch/esm"
+       target="_blank" rel="noopener">ESM-2</a> with the 650M variant.
+    We use it for:
+</p>
+
+<ul>
+    <li><strong>Variant-effect scoring</strong>, as a frozen feature
+    extractor feeding a tiny MLP head per assay. Surprisingly, the
+    best head was a logistic regression with one hidden layer of 16
+    units. That's it.</li>
+    <li><strong>Log-likelihood ratio for protein engineering</strong>
+    — natural log probability ratio of mutant vs. wild-type. We've
+    used it to triage CRISPR screens of cancer targets.</li>
+    <li><strong>Embedding-space nearest neighbors</strong> as a
+    quick duplicate detector on incoming sequences. FAISS over
+    ESM-2 logits &gt; sequence identity checks for a lot of wet-lab
+    pipelines.</li>
+</ul>
+
+<pre class="code"><code><span class="cm"># Daily-driver ESM-2 loader</span>
+<span class="kw">import</span> torch, esm
+
+model, alphabet = esm.<span class="fn">pretrained</span>.<span class="fn">esm2_t33_650M_UR50D</span>()
+batch_converter = alphabet.<span class="fn">get_batch_converter</span>()
+model.<span class="fn">eval</span>().<span class="fn">cuda</span>()
+
+<span class="kw">def</span> <span class="fn">embed</span>(seq: <span class="cls">str</span>) -> torch.<span class="cls">Tensor</span>:
+    <span class="cm"># Returns mean-pooled per-residue logits, length 1280</span>
+    data = [(<span class="str">"q"</span>, seq)]
+    _, _, tokens = <span class="fn">batch_converter</span>(data)
+    tokens = tokens.<span class="fn">cuda</span>()
+    <span class="kw">with</span> torch.<span class="fn">no_grad</span>():
+        out = <span class="fn">model</span>(tokens, repr_layers=[<span class="num">33</span>], return_contacts=<span class="kw">False</span>)
+    h = out[<span class="str">"representations"</span>][<span class="num">33</span>]
+    <span class="kw">return</span> h[<<span class="num">0</span>, <span class="num">1</span>:<span class="num">1</span> + <span class="fn">len</span>(seq)].<span class="fn">mean</span>(<span class="num">0</span>)</code></pre>
+
+</section>
+
+<section>
+
+<h2>Structure predictors: where AlphaFold 3 won, where Boltz didn't</h2>
+
+<p>
+    ESMFold is fast. We run 200 mini-proteins through it in an
+    evening. But the precision bar is set by
+    <a href="https://www.nature.com/articles/s41586-024-07487-w"
+       target="_blank" rel="noopener">AlphaFold 3</a>, which
+    consistently beats ESMFold on multi-chain assemblies and on
+    anything with bound cofactors.
+</p>
+
+<p>
+    We tried replacing AF3 with
+    <a href="https://github.com/jwohlwend/boltz" target="_blank" rel="noopener">Boltz</a>
+    in two projects in 2025. Lessons:
+</p>
+
+<ol>
+    <li>Single-chain protein-ligand complexes: Boltz ~ AF3 within
+    pLDDT error. Tied.</li>
+    <li>Antibody-antigen complexes: AF3 noticeably better. Boltz
+    struggles with the CDRs.</li>
+    <li>Protein-RNA complexes: Boltz &gt; AF3 for some families,
+    about equal for others. We kept both.</li>
+</ol>
+
+<p>
+    The takeaway I share with collaborators: pick AF3 if you can
+    afford the throughput. Pick Boltz if you need a hundred
+    structures in an afternoon.
+</p>
+
+<div class="callout warn">
+    <p><strong>Calibration warning.</strong> Neither AF3 nor Boltz
+    confidence scores are well calibrated on
+    out-of-distribution scaffolds (de novo proteins, all-helix
+    domains, scaffolds &gt; 600 residues). Use them as relative
+    rankings, not as "this is the answer" probabilities.</p>
+</div>
+
+</section>
+
+<section>
+
+<h2>The "ESM-3 + downstream tasks" story, briefly</h2>
+
+<p>
+    <a href="https://www.biorxiv.org/content/10.1101/2024.10.22.619765v1"
+       target="_blank" rel="noopener">ESM-3 (Hayes et al., 2024)</a>
+    introduced a multi-track architecture: sequence, structure, and
+    function tokens. We picked up the pretrained checkpoint in early
+    2025 and tried to use it as a drop-in replacement for ESM-2.
+</p>
+
+<p>
+    Honest result: for sequence-only inference, ESM-3 is no
+    improvement over ESM-2 once you include the structure track. For
+    tasks where you actually have a structure available (maybe
+    from a homology model), ESM-3 wins handily. For tasks where you
+    don't, don't pay the throughput cost.
+</p>
+
+</section>
+
+<section>
+
+<h2>Things I'm still trying to figure out</h2>
+
+<p>
+    Three open questions in the lab right now:
+</p>
+
+<ol>
+    <li><strong>How much protein engineering benefit comes from the
+    pretraining objective vs. the scale?</strong> Ablation looks
+    hard because you can't cleanly separate them in the released
+    checkpoints.</li>
+    <li><strong>Are PLM confidence scores <em>transformable</em> into
+    probabilities for property prediction?</strong> We have a
+    small project on post-hoc calibration. Results so far: barely,
+    and only with extra data per domain.</li>
+    <li><strong>What's the analogue of "prompt engineering" for
+    proteins?</strong> Embedding-context concatenation works
+    surprisingly well. Sequence-level magic prompts, less so.</li>
+</ol>
+
+</section>
+
+<section>
+
+<h2>What I'd recommend to a new lab</h2>
+
+<ol>
+    <li>Start with <strong>ESM-2 650M logits + a tiny per-task head</strong>.
+    Stop when that's no longer competitive.</li>
+    <li>If you're predicting complexes, run <strong>AF3 in
+    parallel</strong> with a baseline (e.g. AF2-multimer). Don't
+    trust the confident score, trust the difference between the two.</li>
+    <li>If you need throughput on single proteins, try
+    <strong>Boltz-1x or ESMFold</strong>. They are not state-of-the-art
+    on benchmarks; they're state-of-the-art on
+    <em>practical</em> throughput for 2025 budgets.</li>
+    <li>Treat PLM internals as opaque for now. The
+    attention-head-interpretation literature is half of the field
+    right now, but interpretability hooks for protein LMs are
+    still loose.</li>
+</ol>
+
+</section>
+
+<section class="references">
+
+<h2>References</h2>
+
+<ol>
+    <li>Lin, Z. et al. <em>Science</em> 2023 — ESM-2. <a href="https://www.science.org/doi/10.1126/science.ade2574">link</a></li>
+    <li>Lin, Z. et al. <em>Science</em> 2023 — ESMFold. <a href="https://www.science.org/doi/10.1126/science.ade1674">link</a></li>
+    <li>Hayes, T. et al. <em>bioRxiv 2024</em> — ESM-3. <a href="https://www.biorxiv.org/content/10.1101/2024.10.22.619765v1">link</a></li>
+    <li>Abramson, J. et al. <em>Nature</em> 2024 — AlphaFold 3. <a href="https://www.nature.com/articles/s41586-024-07487-w">link</a></li>
+    <li>Wohlwend, J. et al. <em>GitHub 2024</em> — Boltz. <a href="https://github.com/jwohlwend/boltz">link</a></li>
+    <li>Jumper, J. et al. <em>Nature</em> 2021 — AlphaFold. <a href="https://www.nature.com/articles/s41586-021-03819-2">link</a></li>
+</ol>
+
+</section>
+
+<div class="series-pager">
+    <a href="ai-for-biology-3.html">
+        <span class="label">Previous</span>
+        <span class="title">Self-supervised transfer</span>
+    </a>
+    <a href="ai-for-biology-5.html">
+        <span class="label">Next in series</span>
+        <span class="title">Evaluating chemical FMs</span>
+    </a>
+</div>
+
+</article>
+
+</main>
+
+<footer>
+
+    <div class="container">
+        <p>© <span id="year"></span> Guillermo Ramajo Fernández</p>
+    </div>
+
+</footer>
+
+<script src="../assets/js/main.js"></script>
+
+</body>
+
+</html>

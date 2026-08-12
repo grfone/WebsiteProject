@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" font-family="Inter, sans-serif">
+  <style>
+    .line { stroke: #94a3b8; stroke-width: 2; }
+    .pt { fill: #2563eb; }
+    .lbl { fill: #111827; font-weight: 600; font-size: 12px; }
+    .yr  { fill: #6b7280; font-size: 11px; }
+    .dot { fill: #c084fc; }
+  </style>
+  <text x="400" y="30" text-anchor="middle" style="font-weight:700; font-size:16px; fill:#111827;">A short history of protein language models</text>
+  <line class="line" x1="40" y1="120" x2="760" y2="120"/>
+  <g transform="translate(80,120)">
+    <circle r="6" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">ESM-1</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2020</text>
+  </g>
+  <g transform="translate(180,120)">
+    <circle r="8" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">ESM-1b / ESM-2</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2021–22</text>
+  </g>
+  <g transform="translate(300,120)">
+    <circle r="8" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">AlphaFold</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2021</text>
+  </g>
+  <g transform="translate(420,120)">
+    <circle r="9" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">RoseTTAFold</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2021</text>
+  </g>
+  <g transform="translate(540,120)">
+    <circle r="9" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">ESMFold</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2022</text>
+  </g>
+  <g transform="translate(660,120)">
+    <circle r="10" class="pt"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">AlphaFold 3</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2024</text>
+  </g>
+  <g transform="translate(740,120)">
+    <circle r="11" fill="#7c3aed"/>
+    <text x="0" y="-15" text-anchor="middle" class="lbl">ESM-3</text>
+    <text x="0" y="35" text-anchor="middle" class="yr">2024–25</text>
+  </g>
+</svg>

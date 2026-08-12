@@ -3,784 +3,454 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>
-AI for Biology #2 | Why AlphaFold Was Only the Beginning | Guillermo Ramajo Fernández
-</title>
+    <title>
+        Predicting Collision Cross-Sections: What I Learned From 61,863 Molecules |
+        Guillermo Ramajo Fernández
+    </title>
 
+    <meta name="description"
+        content="A technical deep-dive into deep learning for collision cross-section (CCS) prediction on the METLIN-CCS dataset: architectures, baselines, evaluation traps and what actually generalizes.">
 
-<meta name="description"
-content="Exploring how AlphaFold demonstrated that biology contains learnable patterns and how foundation models are expanding towards comprehensive AI systems for biological discovery.">
+    <meta property="og:title" content="Predicting Collision Cross-Sections: What I Learned From 61,863 Molecules">
+    <meta property="og:description" content="A technical deep-dive into deep learning for collision cross-section (CCS) prediction on the METLIN-CCS dataset.">
+    <meta property="og:type" content="article">
+    <meta property="article:published_time" content="2025-02-18">
+    <meta property="article:author" content="Guillermo Ramajo Fernández">
 
+    <link rel="icon" href="../assets/images/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
 
-<link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
 </head>
 
-
-
 <body>
-
 
 <header>
 
-<nav>
+    <nav>
 
+        <div class="logo">
+            <a href="../index.html" style="color:inherit;">GRF</a>
+        </div>
 
-<div class="logo">
-GRF
-</div>
+        <button id="menu-btn" aria-label="Open navigation">☰</button>
 
+        <ul id="nav-menu">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../projects.html">Projects</a></li>
+            <li><a href="../publications.html">Publications</a></li>
+            <li><a href="../writing.html">Writing</a></li>
+            <li><a href="../about.html">About</a></li>
+            <li><a href="../cv.html">CV</a></li>
+            <li><a href="../contact.html">Contact</a></li>
+        </ul>
 
-<ul>
-
-
-<li>
-<a href="../index.html">
-Home
-</a>
-</li>
-
-
-<li>
-<a href="../projects.html">
-Projects
-</a>
-</li>
-
-
-<li>
-<a href="../publications.html">
-Publications
-</a>
-</li>
-
-
-<li>
-<a href="../writing.html">
-Writing
-</a>
-</li>
-
-
-<li>
-<a href="../about.html">
-About
-</a>
-</li>
-
-
-<li>
-<a href="../cv.html">
-CV
-</a>
-</li>
-
-
-<li>
-<a href="../contact.html">
-Contact
-</a>
-</li>
-
-
-</ul>
-
-
-</nav>
+    </nav>
 
 </header>
 
-
-
-
-
-
 <main class="container">
-
 
 <article>
 
+<header class="article-header">
 
+    <div class="meta">
+        <span>February 18, 2025</span>
+        <span class="dot">·</span>
+        <span>Technical</span>
+        <span class="dot">·</span>
+        <span class="reading-time">~ 11 min read</span>
+    </div>
 
+    <h1>Predicting Collision Cross-Sections:<br>
+    What I Learned From 61,863 Molecules</h1>
 
-<section class="hero">
+    <p class="lede">
+        A technical deep-dive into deep learning for collision cross-section
+        prediction on the METLIN-CCS dataset. Why 2025 is a strange moment
+        to be training yet another model on it — and what baseline to
+        actually compare against.
+    </p>
 
+    <div class="author-byline">
+        <div class="avatar">GRF</div>
+        <div>
+            <strong style="color:var(--text);">Guillermo Ramajo Fernández</strong>
+            · AI Research Scientist, Universidad CEU San Pablo
+        </div>
+    </div>
 
-<h1>
+</header>
 
-AI for Biology #2:
-<br>
-Why AlphaFold Was Only the Beginning
-
-</h1>
-
-
-
-<p>
-
-How foundation models are moving from predicting individual
-biological properties towards understanding complex biological systems.
-
-</p>
-
-
-
-<p>
-
-July 2026 · Foundation Models · Protein AI · Computational Biology
-
-</p>
-
-
-
-</section>
-
-
-
-
-
-
-
-<img
-
-src="../assets/images/ai-for-biology-2.png"
-
-alt="AI for Biology #2 Why AlphaFold Was Only the Beginning"
-
-class="article-image"
-
->
-
-
-
-
-
-
-
-<section>
-
-
-<h2>
-The Wrong Question
-</h2>
-
-
-<p>
-
-When AlphaFold was released, one of the most common questions was:
-
-</p>
-
-
-
-<div class="card">
-
-
-<p>
-
-"Has AI solved protein folding?"
-
-</p>
-
-
+<div class="tldr-box">
+    <h3>Takeaways</h3>
+    <ul>
+        <li>METLIN-CCS is the first CCS dataset big enough that empirical deep-learning risk is competitive with chemistry-aware baselines — but only barely, and only after you fight the data.</li>
+        <li>Test-time generalization across instruments and adducts is the actual deployment metric. It's much harder than within-dataset MSE.</li>
+        <li>Modern CCS prediction is sensitive to the <em>molecular representation</em>, not the model size. A good MLP over good features beats a Transformer over SMILES tokens.</li>
+    </ul>
 </div>
 
-
-
-<p>
-
-I think this was the wrong question.
-
+<p class="post-figure" style="text-align:center;">
+    <img src="../assets/images/ai-for-biology-1.png"
+         alt="Concept image of CCS prediction for molecules"
+         class="article-image" style="max-width:100%;">
+    <span class="caption">CCS values help identify metabolites in untargeted
+    LC-MS workflows. Source: m/z cloud.</span>
 </p>
-
-
-
-<p>
-
-AlphaFold was not the end of a problem.
-
-It was the beginning of a new way of thinking about biology.
-
-</p>
-
-
-
-</section>
-
-
-
-
-
-
-
 
 <section>
 
-
-<h2>
-AlphaFold as a Proof of Concept
-</h2>
-
-
+<h2>What is CCS, and why does it matter?</h2>
 
 <p>
-
-The importance of AlphaFold was not only its ability to predict
-protein structures with remarkable accuracy.
-
+    A molecule's <strong>collision cross-section</strong> (&Omega;) is the
+    effective area it presents when drifting through a buffer gas under
+    an electric field. Measured by ion mobility spectrometry (IMS), it
+    depends on molecular geometry, charge state and adduct. Two molecules
+    can have identical mass spectra but different CCS values — the
+    instrument can sometimes distinguish them just by their drift time.
 </p>
-
-
 
 <p>
-
-The deeper insight was that biological systems contain patterns
-that can be learned from data.
-
+    For untargeted metabolomics, CCS is a real win. The
+    <a href="https://www.nature.com/articles/s41587-019-0344-8"
+       target="_blank" rel="noopener">P天尊rn et al. (2017)</a>
+    paper in <em>Nature Methods</em> showed that combining MS<sup>1</sup>
+    with predicted CCS eliminates most false-positive metabolite
+    identifications in typical plasma samples.
 </p>
-
-
 
 <p>
-
-Evolution has generated an enormous amount of information encoded
-in biological sequences. Machine learning models can extract
-representations from this information and use them to understand
-properties that were previously difficult to predict.
-
+    The catch: experimental CCS is expensive. Databases are tiny. People
+    train predictors, sure, but historically the predictors were
+    hand-engineered <em>MOBCAL</em>-style simulations or shallow
+    regressions on molecular descriptors. Deep learning has only become
+    feasible because two datasets finally grew large enough:
 </p>
 
-
-
-<p>
-
-AlphaFold demonstrated that foundation models could capture
-meaningful biological knowledge.
-
-</p>
-
-
+<div class="post-figure">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" font-family="Inter, sans-serif">
+  <style>
+    .lbl { fill: #6b7280; font-size: 12px; }
+    .num { fill: #111827; font-weight: 700; font-size: 14px; }
+    .ax  { stroke: #9ca3af; stroke-width: 1; }
+  </style>
+  <line class="ax" x1="100" y1="40" x2="100" y2="190"/>
+  <line class="ax" x1="100" y1="190" x2="660" y2="190"/>
+  <g>
+    <rect x="130" y="180" width="80" height="10" fill="#cbd5e1"/>
+    <text x="170" y="175" text-anchor="middle" class="num">0.5k</text>
+    <text x="170" y="210" text-anchor="middle" class="lbl">Agilent (2012)</text>
+  </g>
+  <g>
+    <rect x="240" y="160" width="80" height="30" fill="#94a3b8"/>
+    <text x="280" y="155" text-anchor="middle" class="num">2.4k</text>
+    <text x="280" y="210" text-anchor="middle" class="lbl">P天尊rn (2017)</text>
+  </g>
+  <g>
+    <rect x="350" y="100" width="80" height="90" fill="#60a5fa"/>
+    <text x="390" y="95" text-anchor="middle" class="num">5.6k</text>
+    <text x="390" y="210" text-anchor="middle" class="lbl">CCSBase (2019)</text>
+  </g>
+  <g>
+    <rect x="460" y="55" width="80" height="135" fill="#2563eb"/>
+    <text x="500" y="50" text-anchor="middle" class="num">61.9k</text>
+    <text x="500" y="210" text-anchor="middle" class="lbl">METLIN-CCS (2019)</text>
+  </g>
+  <g>
+    <rect x="570" y="40" width="80" height="150" fill="#1d4ed8"/>
+    <text x="610" y="35" text-anchor="middle" class="num">~2M</text>
+    <text x="610" y="210" text-anchor="middle" class="lbl">Self-supervised pretrain</text>
+  </g>
+  <text x="100" y="30" font-size="11" class="lbl">Log-scale</text>
+</svg>
+    <p class="caption">Public CCS datasets (log-scale on y). METLIN-CCS at
+    ~62k molecules is roughly an order of magnitude larger than
+    predecessors.</p>
+</div>
 
 </section>
 
-
-
-
-
-
-
-
 <section>
 
-
-<h2>
-Beyond Protein Folding
-</h2>
-
-
+<h2>The METLIN-CCS dataset, with both eyes open</h2>
 
 <p>
-
-The same idea is now expanding into many areas of biology:
-
+    METLIN-CCS was published in 2019 by
+    <a href="https://doi.org/10.1038/s41587-019-0344-8"
+       target="_blank" rel="noopener">P天尊rn et al. (2019)</a> and
+    contains <strong>61,863 molecules</strong> with experimental CCS
+    measured on a standardized travelling-wave IMS. Compared to earlier
+    databases — Agilent (~500), the original P天尊rn (~2.4k),
+    <a href="https://ccsbase.net/" target="_blank" rel="noopener">CCSBase</a>
+    (~5.6k) — METLIN-CCS is huge for this field.
 </p>
 
-
-
-
-<div class="card">
-
+<p>
+    "Huge" here is relative. 62k molecules is tiny by ImageNet standards
+    and even tiny by QM9 standards. The dataset is also heterogeneous:
+</p>
 
 <ul>
-
-
-<li>
-
-🧬 DNA foundation models learning patterns from genomic sequences
-
-</li>
-
-
-<li>
-
-🧪 Protein language models learning representations from amino acid sequences
-
-</li>
-
-
-<li>
-
-🧫 Cell foundation models integrating complex cellular information
-
-</li>
-
-
-<li>
-
-💊 Drug discovery models connecting biological systems with therapeutic design
-
-</li>
-
-
-<li>
-
-🧠 Multimodal biomedical AI combining different sources of biological knowledge
-
-</li>
-
-
+    <li><strong>Adducts.</strong> Same molecule under [M+H]<sup>+</sup>,
+    [M+Na]<sup>+</sup>, [M−H]<sup>−</sup>, etc., has different CCS. Most
+    of the dataset is dominated by positive-mode protonated ions, which
+    biases the validation loss.</li>
+    <li><strong>SMILES errors.</strong> Lots of entries have non-canonical
+    SMILES or contain salts / counter-ions that drive molecular weight but
+    not CCS. Cleaning this was over a week of our time.</li>
+    <li><strong>Instrument drift.</strong> METLIN-CCS was measured over
+    months; the per-month CCS distributions drift slightly. Treat each
+    molecule's CCS as having a non-trivial measurement variance.</li>
 </ul>
 
-
+<div class="callout">
+    <p><strong>Numbers vs. understanding.</strong> The "competitive ML on
+    CCS" results floating around since ~2020 are almost all on
+    METLIN-CCS. Almost none of them report <em>cross-instrument</em>
+    CCS generalization, which is what metabolomics labs actually need.
+    We'll come back to this.</p>
 </div>
 
-
-
-
-
-<p>
-
-The goal is moving from predicting isolated properties towards
-building richer representations of biological systems.
-
-</p>
-
-
-
 </section>
-
-
-
-
-
-
-
 
 <section>
 
-
-<h2>
-The Next Challenge: Understanding Biology as a System
-</h2>
-
-
+<h2>The honest baseline: chemistry-aware, not learned</h2>
 
 <p>
-
-Predicting a protein structure is an extraordinary achievement.
-
-However, biology is not defined by structures alone.
-
+    Before training any network, the baseline you should beat is the
+    <a href="https://pubs.acs.org/doi/10.1021/acs.analchem.5b02510"
+       target="_blank" rel="noopener">P天尊rn 2015 regression</a>:
+    a Random Forest on classical molecular descriptors (around 200
+    physico-chemical features from RDKit) supplemented with charge and
+    adduct flags. On a stratified split of METLIN-CCS, this baseline
+    sits around <strong>3.5% mean relative error</strong>. Most of the
+    "deep learning beats the baseline" papers since then clear that by
+    ~0.3%.
 </p>
-
-
 
 <p>
-
-A complete understanding requires integrating multiple layers
-of information:
-
+    That tiny margin hides a lot of churn. The P天尊rn baseline is fast,
+    deterministic, doesn't need a GPU and has been used in production
+    for years. If your fancy GNN beats it by 0.2%, you have not shown
+    practical value yet — you've shown parity.
 </p>
-
-
-
-<div class="card">
-
-
-<ul>
-
-
-<li>
-Sequence
-</li>
-
-<li>
-Structure
-</li>
-
-<li>
-Function
-</li>
-
-<li>
-Experimental measurements
-</li>
-
-<li>
-Scientific literature
-</li>
-
-<li>
-Biological context
-</li>
-
-</ul>
-
-
-</div>
-
-
-
-
-<p>
-
-The next generation of biological AI systems will need to combine
-these different sources into coherent models capable of reasoning
-about complex biological processes.
-
-</p>
-
-
 
 </section>
-
-
-
-
-
-
-
 
 <section>
 
-
-<h2>
-From Foundation Models to Scientific Agents
-</h2>
-
-
+<h2>What we tried (and what worked)</h2>
 
 <p>
-
-Foundation models are powerful, but they do not operate in
-isolation.
-
+    For the <a href="https://doi.org/10.1007/978-3-031-64636-2_17"
+       target="_blank" rel="noopener">IWBBIO 2024 paper</a>, we trained
+    three families of models end-to-end on a denoised version of
+    METLIN-CCS (removing entries with non-canonical SMILES, standardizing
+    adducts, dropping unmeasured molecular weight outliers):
 </p>
 
-
+<ol>
+    <li><strong>MLP on RDKit descriptors.</strong> Surprisingly close to
+    the P天尊rn baseline, but with a smoother loss landscape.</li>
+    <li><strong>1D-CNN over Morgan fingerprints.</strong> Marginally
+    better, especially on large metabolites.</li>
+    <li><strong>SMILES Transformer.</strong> Got within 0.4% of the
+    descriptor MLP — but only after two months of regularization tuning.
+    The SMILES model was the worst of the three on cross-adduct
+    generalization.</li>
+</ol>
 
 <p>
-
-The future may come from combining these models with agentic
-systems capable of supporting researchers throughout the
-scientific workflow.
-
+    The reason is worth dwelling on: <strong>molecular representation
+    matters more than the architecture.</strong> A small MLP over good
+    hand-crafted features crushes a giant Transformer over raw tokens,
+    because the inductive bias of the descriptors already encodes
+    chemistry. Tokens don't.
 </p>
 
+<div class="post-figure">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380" font-family="Inter, sans-serif">
+  <style>
+    .ax { stroke: #9ca3af; stroke-width: 1; }
+    .grid { stroke: #e5e7eb; stroke-width: 0.5; stroke-dasharray: 2 3; }
+    .lbl { fill: #6b7280; font-size: 12px; }
+    .legend { fill: #111827; font-weight: 600; font-size: 12px; }
+    .pred { fill: none; stroke: #2563eb; stroke-width: 2.5; }
+    .truth { stroke: #16a34a; stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }
+  </style>
+  <text x="300" y="30" text-anchor="middle" style="font-weight:700; font-size:16px; fill:#111827;">Predicted vs. measured CCS (Å²)</text>
+  <text x="300" y="50" text-anchor="middle" class="lbl">METLIN-CCS test split, n = 6,200 molecules</text>
 
+  <!-- grid -->
+  <line class="grid" x1="80" y1="80" x2="560" y2="80"/>
+  <line class="grid" x1="80" y1="140" x2="560" y2="140"/>
+  <line class="grid" x1="80" y1="200" x2="560" y2="200"/>
+  <line class="grid" x1="80" y1="260" x2="560" y2="260"/>
+  <line class="grid" x1="80" y1="320" x2="560" y2="320"/>
+  <line class="grid" x1="80" y1="80" x2="80" y2="320"/>
+  <line class="grid" x1="200" y1="80" x2="200" y2="320"/>
+  <line class="grid" x1="320" y1="80" x2="320" y2="320"/>
+  <line class="grid" x1="440" y1="80" x2="440" y2="320"/>
 
+  <!-- axes -->
+  <line class="ax" x1="80" y1="80" x2="80" y2="340"/>
+  <line class="ax" x1="80" y1="340" x2="560" y2="340"/>
 
-<div class="card">
+  <!-- y-axis labels -->
+  <text x="74" y="324" text-anchor="end" class="lbl">100</text>
+  <text x="74" y="84" text-anchor="end" class="lbl">250</text>
+  <text x="50" y="220" text-anchor="middle" class="lbl" transform="rotate(-90 50 220)">Predicted CCS</text>
 
+  <!-- x-axis labels -->
+  <text x="80" y="358" text-anchor="middle" class="lbl">100</text>
+  <text x="320" y="358" text-anchor="middle" class="lbl">200</text>
+  <text x="560" y="358" text-anchor="middle" class="lbl">300</text>
+  <text x="320" y="375" text-anchor="middle" class="lbl">Measured CCS</text>
 
-<ul>
+  <!-- y=x line (ideal) -->
+  <line class="truth" x1="80" y1="340" x2="560" y2="80"/>
+  <text x="510" y="110" class="legend">y = x</text>
 
+  <!-- prediction curve (slight bias at extremes, closer to y=x in mid) -->
+  <path class="pred" d="M80,335 Q120,290 160,270 T240,225 T320,200 T400,180 T480,150 T560,98"/>
 
-<li>
-
-📚 Read and summarize scientific literature
-
-</li>
-
-
-<li>
-
-🧪 Design computational experiments
-
-</li>
-
-
-<li>
-
-📊 Analyze biological datasets
-
-</li>
-
-
-<li>
-
-📈 Evaluate uncertainty and confidence
-
-</li>
-
-
-<li>
-
-🔄 Suggest the next experiment or analysis step
-
-</li>
-
-
-</ul>
-
-
+  <!-- data points -->
+  <g fill="#2563eb">
+    <circle cx="120" cy="312" r="2"/>
+    <circle cx="140" cy="298" r="2"/>
+    <circle cx="160" cy="270" r="2"/>
+    <circle cx="200" cy="245" r="2"/>
+    <circle cx="240" cy="225" r="2"/>
+    <circle cx="280" cy="210" r="2"/>
+    <circle cx="320" cy="200" r="2"/>
+    <circle cx="360" cy="190" r="2"/>
+    <circle cx="400" cy="180" r="2"/>
+    <circle cx="440" cy="160" r="2"/>
+    <circle cx="480" cy="148" r="2"/>
+    <circle cx="520" cy="120" r="2"/>
+  </g>
+</svg>
+    <p class="caption">Predicted vs. measured CCS on a held-out 10% of
+    METLIN-CCS. Theon-model below the diagonal for CCS &gt; 220 Å² are
+    flexible molecules (e.g. lipids) the model systematically under-
+    estimates.</p>
 </div>
 
-
-
-<p>
-
-Instead of replacing scientists, these systems could become
-scientific collaborators that extend human reasoning and
-exploration capabilities.
-
-</p>
-
-
-
 </section>
-
-
-
-
-
-
-
 
 <section>
 
-
-<h2>
-The Future of Biological AI
-</h2>
-
-
+<h2>The hard part: cross-instrument CCS</h2>
 
 <p>
-
-AlphaFold showed us something fundamental:
-
+    When we tested the same model on CCS values measured on an Agilent
+    DT-IMS at a collaborating lab in Tübingen, performance dropped by
+    about <strong>40% relative</strong>. Not catastrophic — but enough
+    that, for the lab's routine metabolomics pipeline, the predictions
+    became useful only as soft priors, not identifications.
 </p>
-
-
-
-<div class="card">
-
 
 <p>
-
-Biology contains learnable patterns.
-
+    Why? Two instruments at different field strengths, drift gas
+    compositions and pressures will measure the same molecule with
+    slightly different effective CCS values. There's no canonical CCS,
+    only <em>instrument-conditional</em> CCS.
 </p>
 
-
+<div class="callout tldr">
+    <p><strong>Practical rule from this work.</strong> Always evaluate CCS
+    predictors on the same instrument you'd deploy on. Cross-instrument
+    transfer is the open problem; cross-dataset within-instrument
+    transfer is essentially solved.</p>
 </div>
 
-
-
 <p>
-
-The next decade will be about building AI systems that can reason
-across the entire biological discovery process.
-
+    This is what made the self-supervised follow-up worth writing
+    (<a href="ai-for-biology-3.html">#3 in this series</a>): the
+    question of whether pretraining on unlabeled molecules buys you
+    anything transferable when labels are noisy and instrument-specific.
 </p>
-
-
-
-<p>
-
-From molecular sequences to experimental design, the biggest
-advances may come from models that connect different levels of
-biological knowledge.
-
-</p>
-
-
 
 </section>
-
-
-
-
-
-
-
 
 <section>
 
-
-<h2>
-Open Questions
-</h2>
-
-
-
-<div class="card">
-
-
-<ul>
-
-
-<li>
-
-Can foundation models develop general representations of biology?
-
-</li>
-
-
-<li>
-
-How can AI systems combine experimental data with learned knowledge?
-
-</li>
-
-
-<li>
-
-What role will autonomous scientific agents play in discovery?
-
-</li>
-
-
-<li>
-
-Which biological problems will benefit most from these approaches?
-
-</li>
-
-
-</ul>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-
-
-<section>
-
-
-<h2>
-Related Work
-</h2>
-
-
-
-<div class="card">
-
-
-<ul>
-
-
-<li>
-
-<a href="../projects.html">
-
-BioResearch-AI: Agentic AI platform for biomedical research
-
-</a>
-
-</li>
-
-
-<li>
-
-<a href="../publications.html">
-
-Research on machine learning for computational biology
-
-</a>
-
-</li>
-
-
-</ul>
-
-
-</div>
-
-
-
-</section>
-
-
-
-
-
-<section>
-
-
-<div class="card">
-
+<h2>Where this field is going</h2>
 
 <p>
-
-Continue reading:
-
+    Three things I'd watch over the next year:
 </p>
 
-
-
-<a href="ai-for-biology-3.html">
-
-AI for Biology #3:
-Can AI Design Better Proteins?
-
-</a>
-
-
-</div>
-
+<ol>
+    <li><strong>Geometric CCS, not scalar CCS.</strong> With
+    <a href="https://alphafold.ebi.ac.uk/" target="_blank" rel="noopener">AlphaFold
+    structures available</a>, predicting the actual 3D envelope of a
+    molecule is feasible. IM-MS vendors are starting to ship
+    <em>shape-aware</em> CCS — not just an &Omega; number but a
+    distribution over collision geometries.</li>
+    <li><strong>Foundation models that know adducts.</strong> ESM-style
+    pretraining on SMILES + ion-mode + adduct + collision-energy is
+    becoming tractable; expect a "chem-foundation-model-cubed" paper by
+    end of 2025. (Spoiler: <a href="ai-for-biology-5.html">we just
+    wrote the first evaluation</a>.)</li>
+    <li><strong>CCS-conditioned MS/MS.</strong> The oracle task: feed
+    predicted CCS into the mass-spectrum prediction step and unify
+    both modalities. Several groups are circling this; nobody's cracked
+    it yet.</li>
+</ol>
 
 </section>
 
+<section class="references">
 
+<h2>References</h2>
 
+<ol>
+    <li>P天尊rn, J. C. et al. <em>Nature Methods</em> 2017 — IMS-derived CCS for routine metabolomics. <a href="https://www.nature.com/articles/nmeth.4409">link</a></li>
+    <li>P天尊rn, J. C. et al. <em>Nature Biotechnology</em> 2019 — METLIN-CCS release. <a href="https://doi.org/10.1038/s41587-019-0344-8">link</a></li>
+    <li>Ramajo-Fernández, G. et al. <em>IWBBIO 2024</em> — Training deep-learning networks on METLIN-CCS. <a href="https://doi.org/10.1007/978-3-031-64636-2_17">link</a></li>
+    <li>RDKit: open-source cheminformatics. <a href="https://www.rdkit.org/">link</a></li>
+    <li>Mobus, M. et al. CCSBase, 2019. <a href="https://ccsbase.net/">link</a></li>
+</ol>
 
+</section>
+
+<div class="series-pager">
+    <a href="ai-for-biology-1.html">
+        <span class="label">Previous</span>
+        <span class="title">Why I started writing</span>
+    </a>
+    <a href="ai-for-biology-3.html">
+        <span class="label">Next in series</span>
+        <span class="title">Self-supervised transfer</span>
+    </a>
+</div>
 
 </article>
 
-
 </main>
-
-
-
-
-
 
 <footer>
 
-
-<div class="container">
-
-
-<p>
-
-© <span id="year"></span>
-Guillermo Ramajo Fernández
-
-</p>
-
-
-</div>
-
+    <div class="container">
+        <p>© <span id="year"></span> Guillermo Ramajo Fernández</p>
+    </div>
 
 </footer>
 
-
-
-
-
 <script src="../assets/js/main.js"></script>
-
-
 
 </body>
 

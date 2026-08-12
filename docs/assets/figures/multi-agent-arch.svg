@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" font-family="Inter, sans-serif">
+  <style>
+    .orchestrator { fill: #1d4ed8; }
+    .agent { fill: #dbeafe; stroke: #2563eb; stroke-width: 1.5; }
+    .agent-lit { fill: #f0fdf4; stroke: #16a34a; stroke-width: 1.5; }
+    .agent-bio { fill: #fef3c7; stroke: #d97706; stroke-width: 1.5; }
+    .agent-design { fill: #fce7f3; stroke: #be185d; stroke-width: 1.5; }
+    .agent-data  { fill: #ede9fe; stroke: #7c3aed; stroke-width: 1.5; }
+    .agent-plan  { fill: #fee2e2; stroke: #dc2626; stroke-width: 1.5; }
+    .human { fill: #fff7ed; stroke: #c2410c; stroke-width: 2; stroke-dasharray: 4 3; }
+    .txt { fill: #111827; font-weight: 600; font-size: 14px; }
+    .sub { fill: #6b7280; font-size: 11px; }
+    .conn { stroke: #94a3b8; stroke-width: 1.5; fill: none; }
+    .conn-active { stroke: #2563eb; stroke-width: 2.5; fill: none; }
+  </style>
+  <text x="450" y="30" text-anchor="middle" class="txt" style="font-size:18px;">Multi-Agent Drug Discovery Architecture</text>
+  <text x="450" y="50" text-anchor="middle" class="sub">Each agent has specialized tools, memory and a domain critic</text>
+
+  <!-- Orchestrator -->
+  <g transform="translate(380,80)">
+    <rect class="orchestrator" width="140" height="55" rx="8"/>
+    <text x="70" y="25" text-anchor="middle" fill="white" class="txt">Orchestrator</text>
+    <text x="70" y="44" text-anchor="middle" fill="white" class="sub">routes messages</text>
+  </g>
+
+  <!-- Agents row -->
+  <g transform="translate(40,200)">
+    <rect class="agent-lit" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Literature</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">PubMed · Patents</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">RAG over corpora</text>
+  </g>
+  <g transform="translate(180,200)">
+    <rect class="agent-bio" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Biology</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">Pathways · Targets</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">KG reasoning</text>
+  </g>
+  <g transform="translate(320,200)">
+    <rect class="agent-design" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Design</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">SMILES · 3D</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">Pocket docking</text>
+  </g>
+  <g transform="translate(460,200)">
+    <rect class="agent-data" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Analysis</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">Code · Stats</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">Omics pipelines</text>
+  </g>
+  <g transform="translate(600,200)">
+    <rect class="agent-plan" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Planner</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">Cost · Value</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">Experiment queue</text>
+  </g>
+
+  <!-- Human-in-loop -->
+  <g transform="translate(740,200)">
+    <rect class="human" width="120" height="80" rx="8"/>
+    <text x="60" y="28" text-anchor="middle" class="txt">Human PI</text>
+    <text x="60" y="48" text-anchor="middle" class="sub">approves pivots</text>
+    <text x="60" y="62" text-anchor="middle" class="sub">wet-lab gate</text>
+  </g>
+
+  <!-- Lines from orchestrator to agents -->
+  <path class="conn-active" d="M450,135 L100,200"/>
+  <path class="conn-active" d="M450,135 L240,200"/>
+  <path class="conn-active" d="M450,135 L380,200"/>
+  <path class="conn-active" d="M450,135 L520,200"/>
+  <path class="conn-active" d="M450,135 L660,200"/>
+  <path class="conn" d="M450,135 L800,200" stroke-dasharray="4 3"/>
+
+  <!-- Bottom: shared resources -->
+  <g transform="translate(40,340)">
+    <rect width="200" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="100" y="24" text-anchor="middle" class="txt">Vector store</text>
+    <text x="100" y="44" text-anchor="middle" class="sub">papers · patents · assays</text>
+  </g>
+  <g transform="translate(260,340)">
+    <rect width="200" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="100" y="24" text-anchor="middle" class="txt">Knowledge graph</text>
+    <text x="100" y="44" text-anchor="middle" class="sub">proteins · pathways · targets</text>
+  </g>
+  <g transform="translate(480,340)">
+    <rect width="200" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="100" y="24" text-anchor="middle" class="txt">Scientific models</text>
+    <text x="100" y="44" text-anchor="middle" class="sub">ESM · RFdiffusion · Boltz</text>
+  </g>
+  <g transform="translate(700,340)">
+    <rect width="160" height="60" rx="8" fill="#f1f5f9" stroke="#94a3b8"/>
+    <text x="80" y="24" text-anchor="middle" class="txt">Wet-lab interface</text>
+    <text x="80" y="44" text-anchor="middle" class="sub">protocols · samples</text>
+  </g>
+
+  <!-- Dotted connections from agents to resources -->
+  <path class="conn" d="M100,280 L140,340"/>
+  <path class="conn" d="M240,280 L360,340"/>
+  <path class="conn" d="M380,280 L580,340"/>
+  <path class="conn" d="M520,280 L780,340"/>
+</svg>

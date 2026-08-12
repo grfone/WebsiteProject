@@ -3,435 +3,248 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>
-Writing | Guillermo Ramajo Fernández
-</title>
+    <title>
+        Writing | Guillermo Ramajo Fernández
+    </title>
 
+    <meta name="description"
+        content="Technical writing by Guillermo Ramajo Fernández on AI, foundation models, computational biology and scientific discovery — since October 2024.">
 
-<meta name="description"
-content="Technical writing by Guillermo Ramajo Fernández about AI, foundation models, computational biology and scientific discovery.">
+    <meta property="og:title" content="Writing | Guillermo Ramajo Fernández">
+    <meta property="og:description" content="Technical writing on AI, foundation models, computational biology and scientific discovery.">
+    <meta property="og:type" content="website">
 
+    <link rel="icon" href="assets/images/favicon.ico">
+    <link rel="stylesheet" href="assets/css/style.css">
 
-<link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
 </head>
 
-
 <body>
-
 
 <header>
 
-<nav>
+    <nav>
 
+        <div class="logo">
+            <a href="index.html" style="color:inherit;">GRF</a>
+        </div>
 
-<div class="logo">
-GRF
-</div>
+        <button id="menu-btn" aria-label="Open navigation">☰</button>
 
+        <ul id="nav-menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="projects.html">Projects</a></li>
+            <li><a href="publications.html">Publications</a></li>
+            <li><a href="writing.html">Writing</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="cv.html">CV</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
 
-<button id="menu-btn" aria-label="Open navigation">
-☰
-</button>
-
-
-<ul id="nav-menu">
-
-
-<li>
-<a href="index.html">
-Home
-</a>
-</li>
-
-
-<li>
-<a href="projects.html">
-Projects
-</a>
-</li>
-
-
-<li>
-<a href="publications.html">
-Publications
-</a>
-</li>
-
-
-<li>
-<a href="writing.html">
-Writing
-</a>
-</li>
-
-
-<li>
-<a href="about.html">
-About
-</a>
-</li>
-
-
-<li>
-<a href="cv.html">
-CV
-</a>
-</li>
-
-
-<li>
-<a href="contact.html">
-Contact
-</a>
-</li>
-
-
-</ul>
-
-
-</nav>
+    </nav>
 
 </header>
 
-
-
-
-
 <main class="container">
 
-
-
-
-
 <section class="hero">
-
-
-<h1>
-Writing
-</h1>
-
-
-<p>
-
-Thoughts on artificial intelligence, foundation models,
-computational biology and the future of scientific discovery.
-
-</p>
-
-
+    <h1>Writing</h1>
+    <p>
+        Notes on artificial intelligence, foundation models, computational
+        biology and the future of scientific discovery. Updated when I
+        have something worth saying, not on a schedule.
+    </p>
+    <p style="font-size:0.95rem; color:var(--text-light); margin-top:1rem;">
+        <strong>Series:</strong> AI for Biology (since Oct 2024)
+    </p>
 </section>
-
-
-
-
-
-
-
 
 <section>
 
+<h2>Latest articles</h2>
 
-<h2>
-Featured Series
-</h2>
+<div class="blog-list">
 
+    <article class="blog-item">
+        <a href="writing/multi-agent-drug-discovery.html" aria-label="Read multi-agent drug discovery post">
+            <img class="thumb" src="assets/images/ai-for-biology-5.png" alt="">
+        </a>
+        <div class="body">
+            <div class="meta">August 4, 2026 · 17 min read · Engineering</div>
+            <h3><a href="writing/multi-agent-drug-discovery.html">Building a Multi-Agent System for Drug Discovery: Six Months of Lessons</a></h3>
+            <p>
+                A retrospective on a multi-agent drug-discovery system:
+                what worked, what didn't, why the orchestrator is most of
+                the engineering work, and why autonomous-agent-scientist
+                is a worse idea than it sounds.
+            </p>
+            <p>
+                <a href="writing/multi-agent-drug-discovery.html">Read article →</a>
+            </p>
+        </div>
+    </article>
 
+    <article class="blog-item">
+        <a href="writing/ai-for-biology-5.html" aria-label="Read chemical foundation models evaluation">
+            <img class="thumb" src="assets/images/ai-for-biology-5.png" alt="">
+        </a>
+        <div class="body">
+            <div class="meta">May 4, 2026 · 16 min read · Research note</div>
+            <h3><a href="writing/ai-for-biology-5.html">Evaluating Chemical Foundation Models for Metabolite Property Prediction</a></h3>
+            <p>
+                A research note on the protocol of a paper sent to
+                <em>Briefings in Bioinformatics</em>: five chemical
+                foundation models, five downstream tasks, the same head
+                — and what surprised us when we ran the comparison.
+            </p>
+            <p>
+                <a href="writing/ai-for-biology-5.html">Read article →</a>
+            </p>
+        </div>
+    </article>
 
-<div class="card">
+    <article class="blog-item">
+        <a href="writing/ai-for-biology-4.html" aria-label="Read protein language models retrospective">
+            <img class="thumb" src="assets/images/ai-for-biology-4.png" alt="">
+        </a>
+        <div class="body">
+            <div class="meta">January 21, 2026 · 13 min read · Notes from the bench</div>
+            <h3><a href="writing/ai-for-biology-4.html">What Protein Language Models Have Taught Me in a Year of Using Them</a></h3>
+            <p>
+                A working researcher's retrospective on ESM-2, ESMFold,
+                AlphaFold 3, ESM-3 and Boltz: which ones shipped into
+                our pipeline, which didn't, and the calibration problem
+                nobody talks about.
+            </p>
+            <p>
+                <a href="writing/ai-for-biology-4.html">Read article →</a>
+            </p>
+        </div>
+    </article>
 
+    <article class="blog-item">
+        <a href="writing/ai-for-biology-3.html" aria-label="Read self-supervised transfer learning for CCS">
+            <img class="thumb" src="assets/images/ai-for-biology-3.png" alt="">
+        </a>
+        <div class="body">
+            <div class="meta">August 9, 2025 · 14 min read · Technical</div>
+            <h3><a href="writing/ai-for-biology-3.html">Self-Supervised Transfer Learning for CCS Prediction</a></h3>
+            <p>
+                A write-up of the <em>IWANN 2025</em> paper. Why
+                pretraining on unlabeled SMILES buys you cross-dataset
+                CCS generalization — and why it doesn't, by itself,
+                fix the cross-instrument problem.
+            </p>
+            <p>
+                <a href="writing/ai-for-biology-3.html">Read article →</a>
+            </p>
+        </div>
+    </article>
 
-<h3>
-AI for Biology
-</h3>
+    <article class="blog-item">
+        <a href="writing/ai-for-biology-2.html" aria-label="Read CCS prediction from 61,863 molecules">
+            <img class="thumb" src="assets/images/ai-for-biology-2.png" alt="">
+        </a>
+        <div class="body">
+            <div class="meta">February 18, 2025 · 11 min read · Technical</div>
+            <h3><a href="writing/ai-for-biology-2.html">Predicting Collision Cross-Sections: What I Learned From 61,863 Molecules</a></h3>
+            <p>
+                A technical deep-dive into deep learning for CCS
+                prediction on METLIN-CCS. Architectures, baselines,
+                evaluation traps, and what actually generalizes across
+                instruments.
+            </p>
+            <p>
+                <a href="writing/ai-for-biology-2.html">Read article →</a>
+            </p>
+        </div>
+    </article>
 
+    <article class="blog-item">
+        <a href="writing/ai-for-biology-1.html" aria-label="Read why I started writing about AI and biology">
+            <img class="thumb" src="assets/images/ai-for-biology-1.png" alt="">
+        </a>
+        <div class="body">
+            <div class="meta">October 12, 2024 · 4 min read · Notes</div>
+            <h3><a href="writing/ai-for-biology-1.html">Why I Started Writing About AI and Biology</a></h3>
+            <p>
+                The kickoff post for this series. Why a PhD candidate in
+                AI who mostly works on molecular property prediction
+                decided to spend some of his evenings writing things
+                down for public reading.
+            </p>
+            <p>
+                <a href="writing/ai-for-biology-1.html">Read article →</a>
+            </p>
+        </div>
+    </article>
 
-<p>
+</div>
 
-A series exploring how artificial intelligence is transforming
-biology, drug discovery and scientific research.
+</section>
 
-</p>
+<section>
 
-
-<p>
-
-Topics include protein foundation models, scientific agents,
-biomedical AI and the future of AI-assisted discovery.
-
-</p>
-
-
+<h2>Topics covered</h2>
 
 <div>
-
-
-<span class="tag">
-AI for Biology
-</span>
-
-<span class="tag">
-Foundation Models
-</span>
-
-<span class="tag">
-Drug Discovery
-</span>
-
-<span class="tag">
-Agentic AI
-</span>
-
-
+    <span class="tag">Foundation Models</span>
+    <span class="tag">Self-Supervised Learning</span>
+    <span class="tag">Drug Discovery</span>
+    <span class="tag">Computational Biology</span>
+    <span class="tag">Molecular Representation Learning</span>
+    <span class="tag">Proteins</span>
+    <span class="tag">ADMET</span>
+    <span class="tag">Multi-Agent Systems</span>
+    <span class="tag">AI Engineering</span>
+    <span class="tag">Research Notes</span>
 </div>
-
-
-
-</div>
-
 
 </section>
-
-
-
-
-
-
-
-
 
 <section>
 
-
-<h2>
-Articles
-</h2>
-
-
-
-<div class="grid">
-
-
-
-
-
+<h2>Where this comes from</h2>
 
 <div class="card">
-
-
-<h3>
-AI for Biology #1:
-From LLMs to Agentic AI
-</h3>
-
-
-<p>
-
-Why the next generation of scientific AI systems will not be
-single models, but teams of specialized agents supporting
-research workflows.
-
-</p>
-
-
-<a href="writing/ai-for-biology-1.html"
-target="_blank">
-
-Read Article
-
-</a>
-
-
+    <p>
+        Most of these posts are side effects of my main work — see the
+        <a href="publications.html">publications</a> page for the
+        peer-reviewed version, or the <a href="projects.html">projects</a>
+        page for engineering artifacts. The writing is where the
+        trade-offs, dead-ends and design reasoning live, before (or
+        without ever) becoming a paper.
+    </p>
+    <p>
+        If you'd like to be notified when a new post goes up, the most
+        reliable way is to drop me a message via the
+        <a href="contact.html">contact page</a>; I don't run a separate
+        newsletter infrastructure.
+    </p>
 </div>
-
-
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h3>
-AI for Biology #2:
-Why AlphaFold Was Only the Beginning
-</h3>
-
-
-<p>
-
-Exploring the transition from protein structure prediction
-towards foundation models capable of understanding complex
-biological systems.
-
-</p>
-
-
-<a href="writing/ai-for-biology-2.html"
-target="_blank">
-
-Read Article
-
-</a>
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h3>
-AI for Biology #3:
-Can AI Design Better Proteins?
-</h3>
-
-
-<p>
-
-How protein language models and generative AI are changing
-the way researchers approach protein engineering.
-
-</p>
-
-
-<a href="writing/ai-for-biology-3.html"
-target="_blank">
-
-Read Article
-
-</a>
-
-
-</div>
-
-
-
-
-
-
-
-</div>
-
 
 </section>
-
-
-
-
-
-
-
-
-
-<section>
-
-
-<h2>
-Future Writing
-</h2>
-
-
-
-<div class="card">
-
-
-<p>
-
-Future articles will include:
-
-</p>
-
-
-<ul>
-
-
-<li>
-Technical deep dives into my AI projects
-</li>
-
-
-<li>
-Lessons learned building scientific AI systems
-</li>
-
-
-<li>
-Research notes on foundation models for biology
-</li>
-
-
-<li>
-Practical tutorials on machine learning workflows
-</li>
-
-
-</ul>
-
-
-</div>
-
-
-
-</section>
-
-
-
-
-
 
 </main>
 
-
-
-
-
-
 <footer>
 
-
-<div class="container">
-
-
-<p>
-
-© <span id="year"></span>
-Guillermo Ramajo Fernández
-
-</p>
-
-
-</div>
-
+    <div class="container">
+        <p>© <span id="year"></span> Guillermo Ramajo Fernández</p>
+    </div>
 
 </footer>
 
-
-
-
-
 <script src="assets/js/main.js"></script>
-
 
 </body>
 

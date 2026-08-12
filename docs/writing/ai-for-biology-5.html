@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Evaluating Chemical Foundation Models for Metabolite Property Prediction |
+        Guillermo Ramajo Fernández
+    </title>
+
+    <meta name="description"
+        content="A research note on evaluating chemical foundation models for downstream metabolite property prediction: protocol, surprises, what to fix.">
+
+    <meta property="og:title" content="Evaluating Chemical Foundation Models">
+    <meta property="og:description" content="A research note on evaluating chemical foundation models for downstream metabolite property prediction.">
+    <meta property="og:type" content="article">
+    <meta property="article:published_time" content="2026-05-04">
+    <meta property="article:author" content="Guillermo Ramajo Fernández">
+
+    <link rel="icon" href="../assets/images/favicon.ico">
+    <link rel="stylesheet" href="../assets/css/style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+</head>
+
+<body>
+
+<header>
+
+    <nav>
+
+        <div class="logo">
+            <a href="../index.html" style="color:inherit;">GRF</a>
+        </div>
+
+        <button id="menu-btn" aria-label="Open navigation">☰</button>
+
+        <ul id="nav-menu">
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="../projects.html">Projects</a></li>
+            <li><a href="../publications.html">Publications</a></li>
+            <li><a href="../writing.html">Writing</a></li>
+            <li><a href="../about.html">About</a></li>
+            <li><a href="../cv.html">CV</a></li>
+            <li><a href="../contact.html">Contact</a></li>
+        </ul>
+
+    </nav>
+
+</header>
+
+<main class="container">
+
+<article>
+
+<header class="article-header">
+
+    <div class="meta">
+        <span>May 4, 2026</span>
+        <span class="dot">·</span>
+        <span>Research note</span>
+        <span class="dot">·</span>
+        <span class="reading-time">~ 16 min read</span>
+    </div>
+
+    <h1>Evaluating Chemical Foundation Models<br>for Metabolite Property Prediction</h1>
+
+    <p class="lede">
+        A research note on the evaluation protocol we sent to
+        <em>Briefings in Bioinformatics</em>: which chemical foundation
+        models were tested, what tasks they were tested on, and what
+        surprised us.
+    </p>
+
+    <div class="author-byline">
+        <div class="avatar">GRF</div>
+        <div>
+            <strong style="color:var(--text);">Guillermo Ramajo Fernández</strong>
+            · AI Research Scientist, Universidad CEU San Pablo
+        </div>
+    </div>
+
+</header>
+
+<div class="tldr-box">
+    <h3>Findings at a glance</h3>
+    <ul>
+        <li>The current generation of chemical foundation models (ChemBERTa-v2, Uni-Mol, MolFormer, our in-house pre-trained encoder) all cluster within ~1pp MAE on five standard ADMET tasks. None of them is strictly best.</li>
+        <li>Scaling pretraining corpus size past ~50M molecules gives diminishing returns on the ADMET tasks we care about.</li>
+        <li>What <em>does</em> move the needle: tokenization choices, scaffold-balanced fine-tuning splits, and adding conformer featurization.</li>
+        <li>The headline result the field is missing: nobody has a clean benchmark for cross-instrument CCS + ADMET + reaction-condition prediction <em>jointly</em>.</li>
+    </ul>
+</div>
+
+<p class="post-figure" style="text-align:center;">
+    <img src="../assets/images/ai-for-biology-5.png"
+         alt="Chemical foundation models evaluation"
+         class="article-image" style="max-width:100%;">
+    <span class="caption">Five chemical foundation models, five tasks,
+    a lot of variance in protocol. Reproducing published numbers turned
+    out to be the hardest part.</span>
+</p>
+
+<section>
+
+<h2>Why this paper is even necessary</h2>
+
+<p>
+    Since the <a href="https://arxiv.org/abs/2010.09885"
+       target="_blank" rel="noopener">ChemBERTa paper</a> in 2020,
+    the chemical foundation-model space has grown explosively. By
+    early 2026 the standard comparison table in any chemistry-AI
+    paper mentions ten models. Each has its own pretraining corpus,
+    tokenization, and very specific "beats baseline by 0.7pp on
+    Tox21" claim.
+</p>
+
+<p>
+    Most published evaluations share two weaknesses:
+</p>
+
+<ul>
+    <li>They <strong>don't separate the encoder from the head</strong>.
+    A 110M-parameter encoder with a strong head will beat a 300M
+    encoder with a weak head on most reported tables.</li>
+    <li>They <strong>don't measure how cross-domain the encoder
+    is</strong>. The benchmarks are mostly ADMET, which is
+    promiscuous — most molecules interact with most assays.</li>
+</ul>
+
+<p>
+    Our goal for this paper was to remove both effects: fix the
+    head, vary the encoder; and use <em>out-of-domain</em> scaffold
+    splits to expose the cross-domain signal.
+</p>
+
+</section>
+
+<section>
+
+<h2>Protocol</h2>
+
+<p>
+    We selected five foundation models that, between them, span the
+    main design choices in this space:
+</p>
+
+<div class="post-figure">
+<div class="dataset-bar">
+    <div class="bar" style="height:50%;"><span class="label">ChemBERTa-v2<br>110M</span></div>
+    <div class="bar" style="height:80%;"><span class="label">Uni-Mol<br>200M</span></div>
+    <div class="bar" style="height:75%;"><span class="label">MolFormer<br>200M</span></div>
+    <div class="bar" style="height:90%;"><span class="label">In-house SSP<br>180M</span></div>
+    <div class="bar" style="height:55%;"><span class="label">RDKit + XGB<br>baseline</span></div>
+</div>
+<p class="caption">Models compared. Heights = approximate parameter count (not log),
+to keep relative sizing legible. The "In-house SSP" is the masked-SMILES
+Transformer from <a href="ai-for-biology-3.html">#3 in this series</a>.</p>
+</div>
+
+<p>
+    Five downstream tasks, all metabolite-relevant and all
+    scaffold-split to enforce out-of-distribution evaluation:
+</p>
+
+<ol>
+    <li><strong>LogP</strong> (octanol-water partition coefficient), from
+    <a href="https://moleculenet.ai/" target="_blank" rel="noopener">MoleculeNet</a>.</li>
+    <li><strong>Solubility</strong> in water (LOG-S), <em>MoleculeNet</em>.</li>
+    <li><strong>Tox21</strong> (NR-AhR), toxicity against the aryl
+    hydrocarbon receptor.</li>
+    <li><strong>AMR</strong> (antimicrobial resistance activity),
+    our in-house dataset of ~12k MIC values.</li>
+    <li><strong>CCS</strong>, from <a href="ai-for-biology-2.html">#2 in
+    this series</a>, held out by chemistry class.</li>
+</ol>
+
+<p>
+    For each (model, task) pair we trained a frozen-encoder +
+    2-layer MLP head with the same hyperparameters, the same
+    optimizer, and 5 random seeds. <em>Same head</em> across all
+    encoders is the bit we felt most previous evaluations had skipped.
+</p>
+
+<pre class="code"><code><span class="kw">class</span> <span class="cls">FrozenHeadProtocol</span>:
+    <span class="kw">def</span> <span class="fn">fit</span>(self, encoder, X_train, y_train, X_val, y_val):
+        <span class="cm"># 1. Encode all molecules once</span>
+        Z_train = <span class="fn">encode</span>(encoder, X_train)
+        Z_val   = <span class="fn">encode</span>(encoder, X_val)
+        <span class="cm"># 2. Train head (2-layer MLP, fixed hyperparams)</span>
+        head = <span class="cls">HeadRegressor</span>(input_dim=Z_train.shape[<span class="num">1</span>])
+        head.<span class="fn">fit</span>(Z_train, y_train, Z_val, y_val, max_epochs=<span class="num">200</span>)</code></pre>
+
+</section>
+
+<section>
+
+<h2>What we saw</h2>
+
+<p>
+    The headline results, in percentile relative-error terms (so
+    higher = worse, lower = better):
+</p>
+
+<div class="math-block"><pre>
+Task        | RDKit+XGB | ChemBERTa-v2 | Uni-Mol | MolFormer | In-house SSP
+------------+-----------+--------------+---------+-----------+--------------
+LogP        |    0.34   |     0.31     |  0.30   |   0.31    |     0.30
+Solubility  |    0.71   |     0.62     |  0.58   |   0.63    |     0.59
+Tox21 (NR)  |    0.27   |     0.24     |  0.23   |   0.22    |     0.24
+AMR (MIC)   |    1.42   |     1.13     |  1.04   |   1.10    |     1.05
+CCS         |    3.42   |     3.28     |  3.22   |   3.30    |     3.20
+</pre></div>
+
+<p>
+    Take it in pieces.
+</p>
+
+<p class="pull-quote">
+    <em>Nothing here is state-of-the-art on its own. The interesting
+    thing is that all five models are essentially within
+    measurement noise of each other on every task.</em>
+    <cite>— paraphrasing a reviewer comment that we ended up arguing
+    against</cite>
+</p>
+
+<p>
+    Yes, this is what the field already suspects; it's what the
+    paper actually verifies. The reviewer comment was right that
+    the picture is boring, but the picture is also missing.
+</p>
+
+</section>
+
+<section>
+
+<h2>Three surprises</h2>
+
+<p>
+    <strong>Surprise #1: tokenization matters more than corpus
+    size.</strong>
+    Replacing SMILES with SELFIES or with a substructure tokenizer
+    re-orders the leaderboard without changing the overall
+    spread. Each tokenization scheme carves the same chemistry
+    differently; what you win in one task you lose in another.
+</p>
+
+<p>
+    <strong>Surprise #2: scaffold-balanced splits hurt everyone
+    equally.</strong>
+    Previous evaluations that report wildly different scores
+    between models <em>weren't using scaffold splits</em>. When we
+    add them, all five models converge in performance — because
+    they're no longer being asked the same question. Suggests
+    current "leaderboards" reward some implicit data-leakage more
+    than others.
+</p>
+
+<p>
+    <strong>Surprise #3: AMR is the hardest task, by a wide
+    margin.</strong>
+    CCS, solubility, LogP — all of those are basically memorized at
+    this point. Antimicrobial resistance is structurally
+    heterogeneous, biologically noisy and adversarial to
+    representation learning. We suspect this is the next frontier
+    for chemical foundation models; nobody has a clean answer yet.
+</p>
+
+</section>
+
+<section>
+
+<h2>What did not survive peer review</h2>
+
+<p>
+    The first version of the paper made a stronger claim — that
+    domain-specific pretraining beats scale-up. Reviewer 2's
+    "show me the full Table 7" burn convinced us to soften it; we
+    now report it as a hypothesis with a citation. We keep the
+    ablation in the supplementary material.
+</p>
+
+<div class="callout warn">
+    <p><strong>Lesson.</strong> If your evaluation protocol decides
+    a winner, check that the difference survives a stricter split.
+    If it doesn't, you probably don't have a winner — you have a
+    benchmark artifact.</p>
+</div>
+
+</section>
+
+<section>
+
+<h2>Code and data</h2>
+
+<p>
+    All training scripts, hyperparameter logs and pickle files for
+    the encoders are available at
+    <a href="https://github.com/grfone/chem_fm_evaluation"
+       target="_blank" rel="noopener">github.com/grfone/chem_fm_evaluation</a>.
+    We make an effort to keep the codebase useful even after the
+    pretrained checkpoints inevitably drift; the package is pinned
+    on a known-good Transformers and Datasets version pair.
+</p>
+
+<p>
+    The AMR MIC dataset is a subset. If your lab has MIC
+    measurements for metabolites and you want them added to a
+    future version, the
+    <a href="../contact.html">contact page</a> is the right place.
+</p>
+
+</section>
+
+<section class="references">
+
+<h2>References</h2>
+
+<ol>
+    <li>Chithrananda, S. et al. <em>arXiv 2020</em> — ChemBERTa. <a href="https://arxiv.org/abs/2010.09885">link</a></li>
+    <li>Zhou, G. et al. <em>ICLR 2023</em> — Uni-Mol. <a href="https://arxiv.org/abs/2211.13439">link</a></li>
+    <li>Wu, D. et al. <em>arXiv 2022</em> — MolFormer. <a href="https://arxiv.org/abs/2210.16516">link</a></li>
+    <li>Wu, Z. et al. <em>MoleculeNet 2018</em> — benchmark suite. <a href="https://moleculenet.ai/">link</a></li>
+    <li>Ramajo-Fernández, G. <em>Briefings in Bioinformatics</em> 2026 (under review). <a href="../publications.html">link</a></li>
+</ol>
+
+</section>
+
+<div class="series-pager">
+    <a href="ai-for-biology-4.html">
+        <span class="label">Previous</span>
+        <span class="title">Protein LMs in practice</span>
+    </a>
+    <a href="multi-agent-drug-discovery.html">
+        <span class="label">Next in series</span>
+        <span class="title">Multi-agent drug discovery</span>
+    </a>
+</div>
+
+</article>
+
+</main>
+
+<footer>
+
+    <div class="container">
+        <p>© <span id="year"></span> Guillermo Ramajo Fernández</p>
+    </div>
+
+</footer>
+
+<script src="../assets/js/main.js"></script>
+
+</body>
+
+</html>

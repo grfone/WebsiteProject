@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280" font-family="Inter, sans-serif">
+  <defs>
+    <linearGradient id="g1" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#dbeafe"/>
+      <stop offset="100%" stop-color="#eff6ff"/>
+    </linearGradient>
+  </defs>
+  <style>
+    .box { fill: url(#g1); stroke: #2563eb; stroke-width: 1.5; }
+    .box2 { fill: #f0fdf4; stroke: #16a34a; stroke-width: 1.5; }
+    .title { font-weight: 700; fill: #111827; font-size: 16px; }
+    .sub { fill: #6b7280; font-size: 12px; }
+    .arrow { stroke: #2563eb; stroke-width: 2; fill: none; marker-end: url(#arr); }
+  </style>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+    </marker>
+  </defs>
+  <text x="450" y="30" text-anchor="middle" class="title">Self-Supervised Pretraining → Supervised Fine-Tuning</text>
+  <g transform="translate(20,70)">
+    <rect class="box" width="160" height="80" rx="10"/>
+    <text x="80" y="36" text-anchor="middle" class="title">SMILES corpus</text>
+    <text x="80" y="58" text-anchor="middle" class="sub">~2M molecules</text>
+  </g>
+  <g transform="translate(220,70)">
+    <rect class="box" width="160" height="80" rx="10"/>
+    <text x="80" y="36" text-anchor="middle" class="title">Masked modeling</text>
+    <text x="80" y="58" text-anchor="middle" class="sub">Transformer</text>
+  </g>
+  <g transform="translate(420,70)">
+    <rect class="box" width="160" height="80" rx="10"/>
+    <text x="80" y="36" text-anchor="middle" class="title">Pretrained encoder</text>
+    <text x="80" y="58" text-anchor="middle" class="sub">frozen or fine-tuned</text>
+  </g>
+  <g transform="translate(620,70)">
+    <rect class="box2" width="160" height="80" rx="10"/>
+    <text x="80" y="36" text-anchor="middle" class="title">CCS predictor</text>
+    <text x="80" y="58" text-anchor="middle" class="sub">regression head</text>
+  </g>
+  <g transform="translate(820,30)">
+    <rect class="box2" width="60" height="160" rx="10"/>
+    <text x="30" y="80" text-anchor="middle" transform="rotate(-90 30 80)" class="title">METLIN-CCS</text>
+  </g>
+  <path class="arrow" d="M180,110 L220,110"/>
+  <path class="arrow" d="M380,110 L420,110"/>
+  <path class="arrow" d="M580,110 L620,110"/>
+  <text x="100" y="185" text-anchor="middle" class="sub">Unlabeled</text>
+  <text x="500" y="185" text-anchor="middle" class="sub">Labeled (61k molecules)</text>
+</svg>
